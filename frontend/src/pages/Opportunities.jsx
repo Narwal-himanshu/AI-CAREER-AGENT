@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calendar, MapPin, ExternalLink, Trophy, Filter, ShieldCheck } from 'lucide-react'
+import { Calendar, ExternalLink, Trophy, Filter, ShieldCheck } from 'lucide-react'
 
 function Opportunities({ profile, analysis }) {
   const [filterType, setFilterType] = useState('All')
@@ -7,7 +7,6 @@ function Opportunities({ profile, analysis }) {
   const primaryDomain = profile?.domain_interest?.[0] || 'DSA/CP'
   const studentLevel = analysis?.skill_profile?.level || 'Beginner'
 
-  // Curate dynamic opportunities list based on domain
   const getOpportunitiesList = (domain, level) => {
     const baseOpportunities = [
       {
@@ -34,7 +33,7 @@ function Opportunities({ profile, analysis }) {
       },
       {
         id: 'opp_003',
-        title: 'LeetCode Weekly Biweekly Contest',
+        title: 'LeetCode Weekly & Biweekly Contests',
         type: 'Contest',
         organiser: 'LeetCode',
         deadline: 'Every Saturday & Sunday',
@@ -134,11 +133,7 @@ function Opportunities({ profile, analysis }) {
     }
 
     const domainList = domainSpecific[domain] || []
-    return [...baseOpportunities, ...domainList].filter(opp => {
-      // Prioritize filtering matching level
-      // Advanced matches intermediate/advanced; beginner matches all; etc.
-      return true
-    })
+    return [...baseOpportunities, ...domainList]
   }
 
   const allOpps = getOpportunitiesList(primaryDomain, studentLevel)
@@ -149,33 +144,32 @@ function Opportunities({ profile, analysis }) {
   const filterCategories = ['All', 'Hackathon', 'Contest', 'CTF', 'Open Source']
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-mist p-6 md:p-8 space-y-6 max-w-7xl mx-auto font-sans text-ink">
       
       {/* Header banner */}
-      <div className="glass-panel p-6 relative overflow-hidden">
-        <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-violet-600/10 blur-2xl"></div>
+      <div className="theme-card bg-paper p-6 relative overflow-hidden">
         <div className="flex items-center gap-3">
-          <Trophy className="h-8 w-8 text-violet-500 glow-violet" />
+          <Trophy className="h-7 w-7 text-signal" />
           <div>
-            <h1 className="text-2xl font-extrabold text-white">Live Opportunities</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Personalized hackathons, contests, and open-source campaigns matching your <span className="text-white font-bold">{primaryDomain}</span> domain.
+            <h1 className="text-2xl font-display font-extrabold text-ink">Live Opportunities</h1>
+            <p className="text-xs text-slate mt-1">
+              Personalized hackathons, contests, and open-source campaigns matching your <span className="text-ink font-bold">{primaryDomain}</span> domain.
             </p>
           </div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-4">
-        <Filter className="h-4 w-4 text-gray-500 mr-2" />
+      <div className="flex flex-wrap items-center gap-2 border-b border-mist pb-4">
+        <Filter className="h-4 w-4 text-slate mr-2" />
         {filterCategories.map((cat) => (
           <button
             key={cat}
             onClick={() => setFilterType(cat)}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
               filterType === cat
-                ? 'bg-violet-600 text-white shadow shadow-violet-600/20'
-                : 'bg-white/3 border border-white/5 text-gray-400 hover:bg-white/5 hover:text-white'
+                ? 'bg-signal text-white border-signal shadow-sm'
+                : 'bg-paper border-gray-200/60 text-slate hover:bg-mist hover:text-ink'
             }`}
           >
             {cat}
@@ -189,37 +183,34 @@ function Opportunities({ profile, analysis }) {
           filteredOpps.map((opp) => (
             <div 
               key={opp.id} 
-              className="glass-panel p-6 flex flex-col justify-between glass-panel-hover transition-all duration-300 relative"
+              className="theme-card bg-paper p-6 flex flex-col justify-between hover:border-signal/25 transition-all duration-300 relative"
             >
               <div className="space-y-4">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-4">
                   <div>
-                    <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest bg-violet-500/10 border border-violet-500/25 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold text-signal uppercase tracking-widest bg-signal-tint border border-signal/10 px-2.5 py-0.5 rounded-md">
                       {opp.type}
                     </span>
-                    <h3 className="text-base font-bold text-white mt-2 leading-snug">
+                    <h3 className="text-base font-display font-bold text-ink mt-3 leading-snug">
                       {opp.title}
                     </h3>
                   </div>
                   
-                  {/* Skill compatibility level badge */}
-                  <span className={`text-[10px] font-semibold flex items-center gap-1 flex-shrink-0 ${
-                    opp.level_filter === studentLevel 
-                      ? 'text-emerald-400' 
-                      : 'text-gray-400'
+                  <span className={`text-[10px] font-bold flex items-center gap-1 flex-shrink-0 ${
+                    opp.level_filter === studentLevel ? 'text-signal' : 'text-slate'
                   }`}>
                     <ShieldCheck className="h-4.5 w-4.5 text-current" />
-                    {opp.level_filter} Matches
+                    {opp.level_filter} Level
                   </span>
                 </div>
 
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <p className="text-xs text-slate leading-relaxed">
                   {opp.description}
                 </p>
 
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {opp.tags.map((tag, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-300 border border-white/5">
+                    <span key={i} className="px-2 py-0.5 rounded text-[9px] font-bold bg-mist text-slate border border-mist">
                       #{tag}
                     </span>
                   ))}
@@ -227,14 +218,14 @@ function Opportunities({ profile, analysis }) {
               </div>
 
               {/* Card Footer details */}
-              <div className="flex justify-between items-center border-t border-white/5 pt-4 mt-6">
+              <div className="flex justify-between items-center border-t border-mist pt-4 mt-6">
                 <div className="space-y-1">
-                  <span className="text-[9px] text-gray-500 uppercase block font-semibold">Organiser</span>
-                  <span className="text-xs text-gray-300 font-medium block">{opp.organiser}</span>
+                  <span className="text-[9px] text-slate uppercase block font-semibold">Organiser</span>
+                  <span className="text-xs text-ink font-bold block">{opp.organiser}</span>
                 </div>
                 <div className="space-y-1 text-right">
-                  <span className="text-[9px] text-gray-500 uppercase block font-semibold">Deadline</span>
-                  <span className="text-xs text-amber-400 font-bold block flex items-center justify-end gap-1.5">
+                  <span className="text-[9px] text-slate uppercase block font-semibold">Deadline</span>
+                  <span className="text-xs text-amber-600 font-bold block flex items-center justify-end gap-1.5 font-mono">
                     <Calendar className="h-3.5 w-3.5" />
                     {opp.deadline}
                   </span>
@@ -246,7 +237,7 @@ function Opportunities({ profile, analysis }) {
                 href={opp.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 py-2.5 rounded-xl bg-white/3 hover:bg-white/8 text-center text-xs font-bold text-white flex items-center justify-center gap-2 border border-white/5 transition-all"
+                className="mt-4 py-2.5 rounded-full border border-signal text-signal hover:bg-signal-tint text-center text-xs font-bold transition-all flex items-center justify-center gap-2"
               >
                 Apply / Register
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -255,7 +246,7 @@ function Opportunities({ profile, analysis }) {
             </div>
           ))
         ) : (
-          <div className="col-span-2 text-center py-12 text-gray-500 text-sm font-semibold">
+          <div className="col-span-2 text-center py-12 text-slate text-sm font-semibold">
             No opportunities found for the selected filter.
           </div>
         )}

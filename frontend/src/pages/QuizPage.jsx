@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Timer, ArrowRight, Loader2, Award } from 'lucide-react'
+import { Timer, ArrowRight, Loader2, Award, GraduationCap } from 'lucide-react'
+import { auth } from '../firebase'
 
-function QuizPage({ profile, questions, onComplete }) {
+function QuizPage({ profile, questions, onComplete, onGoHome }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState({}) // maps q_id to selected option
   const [timings, setTimings] = useState({}) // maps q_id to time elapsed in seconds
@@ -33,7 +34,6 @@ function QuizPage({ profile, questions, onComplete }) {
       // Decrement countdown
       setQuestionTimeLeft((prev) => {
         if (prev <= 1) {
-          // Time is up! Move to next question or stay
           handleNextQuestion()
           return 0
         }
@@ -69,13 +69,11 @@ function QuizPage({ profile, questions, onComplete }) {
     setSubmitting(true)
     setError(null)
 
-    // Calculate total time
     const total_time_seconds = Object.values(timings).reduce((a, b) => a + b, 0)
 
-    // Format quiz answers payload
     const quiz_answers = questions.map((q) => {
       const qId = q.question_id
-      const selected = answers[qId] || 'A' // default to 'A' if unanswered
+      const selected = answers[qId] || 'A'
       return {
         question_id: qId,
         question_text: q.question_text,
@@ -95,9 +93,15 @@ function QuizPage({ profile, questions, onComplete }) {
     }
 
     try {
+      const token = (auth.currentUser && auth.app.options.apiKey !== "AIzaSyAky5V_XMkaW9UZd3dZY8_BfldB_WSrIMY") 
+        ? await auth.currentUser.getIdToken() 
+        : 'mock-uid-123'
       const response = await fetch('http://localhost:8000/api/quiz/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       })
 
@@ -118,8 +122,8 @@ function QuizPage({ profile, questions, onComplete }) {
 
   if (!currentQuestion) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0b0f19]">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+      <div className="flex h-screen items-center justify-center bg-paper">
+        <Loader2 className="h-8 w-8 animate-spin text-signal" />
       </div>
     )
   }
@@ -128,126 +132,133 @@ function QuizPage({ profile, questions, onComplete }) {
   const selectedOption = answers[currentQuestion.question_id]
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6 bg-gradient-to-tr from-[#080b11] via-[#0b0f19] to-[#121021]">
-      <div className="w-full max-w-2xl glass-panel p-8 relative overflow-hidden">
-        
-        {/* Glow Effects */}
-        <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-violet-600/10 blur-3xl"></div>
-
-        {/* Header Dashboard */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Award className="h-6 w-6 text-violet-500" />
-            <span className="font-bold text-white text-md">Diagnostic Assessment</span>
+    <div className="min-h-screen bg-mist flex flex-col font-sans text-ink">
+      
+      {/* Persistent Header */}
+      <header className="fixed top-0 inset-x-0 h-16 border-b border-mist bg-paper/95 backdrop-blur-md z-30 shadow-sm">
+        <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center justify-between">
+          <div onClick={onGoHome} className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
+            <GraduationCap className="h-6.5 w-6.5 text-signal" />
+            <span className="font-display font-extrabold text-lg text-ink tracking-tight">CareerAgent</span>
           </div>
-
-          {/* Time Remaining Timer */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-sm font-semibold">
-            <Timer className={`h-4 w-4 ${questionTimeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-violet-400'}`} />
-            <span className={questionTimeLeft <= 10 ? 'text-red-400 font-bold' : 'text-gray-300'}>
-              {questionTimeLeft}s
+          
+          <div className="flex items-center gap-4">
+            {/* Question progress */}
+            <span className="text-xs font-semibold text-slate">
+              Question {currentIdx + 1} of {questions.length}
             </span>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-white/5 h-2 rounded-full mb-8 overflow-hidden">
-          <div 
-            className="bg-violet-600 h-full rounded-full transition-all duration-300 shadow-md shadow-violet-500/30"
-            style={{ width: `${progressPct}%` }}
-          ></div>
-        </div>
-
-        {error && (
-          <div className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/10 text-sm font-medium text-red-400">
-            {error}
-          </div>
-        )}
-
-        {/* Question Content */}
-        <div className="space-y-6">
-          <div>
-            <div className="flex gap-2 items-center text-xs font-semibold text-violet-400 uppercase tracking-widest mb-2">
-              <span>Question {currentIdx + 1} of {questions.length}</span>
-              <span>•</span>
-              <span>{currentQuestion.topic}</span>
-              <span>•</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] ${
-                currentQuestion.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400' :
-                currentQuestion.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400' :
-                'bg-red-500/10 text-red-400'
-              }`}>{currentQuestion.difficulty}</span>
+            {/* Time Countdown */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-signal-tint border border-signal/10 text-xs font-bold text-signal">
+              <Timer className={`h-3.5 w-3.5 ${questionTimeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-signal'}`} />
+              <span className={questionTimeLeft <= 10 ? 'text-red-500 font-extrabold' : 'text-signal font-mono'}>
+                {questionTimeLeft}s
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-white leading-relaxed">
-              {currentQuestion.question_text}
-            </h3>
-          </div>
-
-          {/* Options grid */}
-          <div className="space-y-3">
-            {Object.entries(currentQuestion.options).map(([key, text]) => {
-              const isSelected = selectedOption === key
-              return (
-                <button
-                  key={key}
-                  onClick={() => handleSelectOption(key)}
-                  className={`w-full px-5 py-4 text-sm font-medium rounded-xl text-left border transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'bg-violet-600/15 border-violet-500 text-violet-300 font-bold shadow-md shadow-violet-500/10' 
-                      : 'bg-white/3 border-white/5 text-gray-300 hover:bg-white/8 hover:text-white'
-                  }`}
-                >
-                  <span className={`inline-flex items-center justify-center h-6 w-6 rounded-lg mr-3 text-xs font-bold ${
-                    isSelected ? 'bg-violet-600 text-white shadow' : 'bg-white/5 text-gray-400'
-                  }`}>
-                    {key}
-                  </span>
-                  {text}
-                </button>
-              )
-            })}
           </div>
         </div>
+      </header>
 
-        {/* Action Controls */}
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/5">
-          <button
-            onClick={handlePrevQuestion}
-            disabled={currentIdx === 0}
-            className="px-5 py-2.5 rounded-xl border border-white/5 bg-white/3 hover:bg-white/5 text-xs font-bold text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 disabled:cursor-not-allowed transition-all cursor-pointer"
-          >
-            Previous
-          </button>
+      {/* Main card viewport */}
+      <div className="flex-1 pt-24 pb-12 flex items-center justify-center px-6">
+        <div className="w-full max-w-2xl theme-card bg-paper p-8 relative shadow-sm border border-gray-200/60">
 
-          {currentIdx < questions.length - 1 ? (
-            <button
-              onClick={handleNextQuestion}
-              className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-bold text-white flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-violet-600/20"
-            >
-              Next Question
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <button
-              disabled={submitting}
-              onClick={handleSubmit}
-              className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-bold text-white flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-lg shadow-violet-600/20"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  Analyzing Skills...
-                </>
-              ) : (
-                <>
-                  Submit Assessment
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
+          {error && (
+            <div className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-sm font-medium text-red-500">
+              {error}
+            </div>
           )}
-        </div>
 
+          {/* Progress bar */}
+          <div className="w-full bg-mist h-1.5 rounded-full mb-6 overflow-hidden">
+            <div 
+              className="bg-signal h-full rounded-full transition-all duration-300 shadow-sm"
+              style={{ width: `${progressPct}%` }}
+            ></div>
+          </div>
+
+          {/* Question Details */}
+          <div className="space-y-6">
+            <div>
+              <div className="flex gap-2 items-center text-[10px] font-bold text-signal uppercase tracking-widest mb-1.5">
+                <span>{currentQuestion.topic}</span>
+                <span>•</span>
+                <span className={`px-2 py-0.5 rounded ${
+                  currentQuestion.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-600' :
+                  currentQuestion.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-600' :
+                  'bg-red-500/10 text-red-600'
+                }`}>{currentQuestion.difficulty}</span>
+              </div>
+              <h3 className="text-base font-display font-bold text-ink leading-relaxed">
+                {currentQuestion.question_text}
+              </h3>
+            </div>
+
+            {/* Options grid */}
+            <div className="space-y-2.5">
+              {Object.entries(currentQuestion.options).map(([key, text]) => {
+                const isSelected = selectedOption === key
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleSelectOption(key)}
+                    className={`w-full px-5 py-4 text-xs font-semibold rounded-xl text-left border transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'bg-signal-tint border-signal text-signal font-bold shadow-sm' 
+                        : 'bg-paper border-gray-200/60 text-slate hover:bg-mist hover:text-ink'
+                    }`}
+                  >
+                    <span className={`inline-flex items-center justify-center h-5 w-5 rounded-md mr-3 text-[10px] font-bold ${
+                      isSelected ? 'bg-signal text-white' : 'bg-mist text-slate'
+                    }`}>
+                      {key}
+                    </span>
+                    {text}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex justify-between items-center mt-8 pt-6 border-t border-mist">
+            <button
+              onClick={handlePrevQuestion}
+              disabled={currentIdx === 0}
+              className="px-5 py-2.5 rounded-full border border-signal hover:bg-signal-tint text-xs font-bold text-signal disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              Previous
+            </button>
+
+            {currentIdx < questions.length - 1 ? (
+              <button
+                onClick={handleNextQuestion}
+                className="px-6 py-3 rounded-full bg-signal hover:bg-signal/90 text-xs font-bold text-white flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-signal/20"
+              >
+                Next Question
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                disabled={submitting}
+                onClick={handleSubmit}
+                className="px-6 py-3 rounded-full bg-signal hover:bg-signal/90 text-xs font-bold text-white flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-signal/20"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    Analyzing Skills...
+                  </>
+                ) : (
+                  <>
+                    Submit Assessment
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+        </div>
       </div>
     </div>
   )

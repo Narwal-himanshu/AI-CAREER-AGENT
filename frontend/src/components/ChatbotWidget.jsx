@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { MessageSquare, X, Send, Bot, User, CornerDownLeft } from 'lucide-react'
+import { MessageSquare, X, Send, Bot, User } from 'lucide-react'
 
 function ChatbotWidget({ summary, skillProfile }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -13,7 +13,6 @@ function ChatbotWidget({ summary, skillProfile }) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
 
-  // Scroll messages viewport to bottom on update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isOpen])
@@ -30,7 +29,6 @@ function ChatbotWidget({ summary, skillProfile }) {
     setMessages((prev) => [...prev, userMsg])
     setInput('')
 
-    // Generate responsive bot response in context of profile summary
     setTimeout(() => {
       let botResponse = ""
       const lowerInput = input.toLowerCase()
@@ -57,12 +55,12 @@ function ChatbotWidget({ summary, skillProfile }) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50 font-sans text-ink">
       {/* Trigger Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 hover:bg-violet-500 text-white shadow-xl shadow-violet-600/30 transition-all hover:scale-110 cursor-pointer"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-signal hover:bg-signal/90 text-white shadow-lg shadow-signal/20 transition-all hover:scale-105 cursor-pointer"
         >
           <MessageSquare className="h-6 w-6" />
         </button>
@@ -70,39 +68,41 @@ function ChatbotWidget({ summary, skillProfile }) {
 
       {/* Floating Chat Panel */}
       {isOpen && (
-        <div className="w-80 sm:w-96 h-[480px] glass-panel flex flex-col overflow-hidden animate-shimmer">
+        <div className="w-80 sm:w-96 h-[480px] bg-paper border border-gray-200/80 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-[#12192c]">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-mist bg-mist">
             <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-violet-400" />
+              <div className="h-8 w-8 rounded-full bg-signal-tint flex items-center justify-center text-signal">
+                <Bot className="h-4.5 w-4.5" />
+              </div>
               <div>
-                <h4 className="text-sm font-bold text-white leading-none">Career Assistant</h4>
-                <span className="text-[10px] text-emerald-400 font-medium mt-1 inline-block">Online</span>
+                <h4 className="text-xs font-bold text-ink leading-none">Career Assistant</h4>
+                <span className="text-[9px] text-emerald-600 font-bold mt-1.5 inline-block">Online</span>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all cursor-pointer"
+              className="text-slate hover:text-ink p-1 rounded-lg hover:bg-mist transition-all cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
           {/* Messages list */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-paper">
             {messages.map((msg) => {
               const isBot = msg.sender === 'bot'
               return (
                 <div key={msg.id} className={`flex gap-2.5 max-w-[85%] ${isBot ? 'mr-auto' : 'ml-auto flex-row-reverse'}`}>
                   <div className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isBot ? 'bg-violet-600/20 text-violet-400' : 'bg-white/5 text-gray-300'
+                    isBot ? 'bg-signal-tint text-signal' : 'bg-mist text-slate'
                   }`}>
                     {isBot ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
                   </div>
                   <div className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed border ${
                     isBot 
-                      ? 'bg-white/3 border-white/5 text-gray-200 rounded-tl-none' 
-                      : 'bg-violet-600/20 border-violet-500/20 text-violet-200 rounded-tr-none'
+                      ? 'bg-mist border-mist text-ink rounded-tl-none font-medium' 
+                      : 'bg-signal-tint border-signal/15 text-signal rounded-tr-none font-semibold'
                   }`}>
                     {msg.text}
                   </div>
@@ -113,18 +113,19 @@ function ChatbotWidget({ summary, skillProfile }) {
           </div>
 
           {/* Input field */}
-          <div className="p-3 border-t border-white/5 bg-[#12192c]/50 flex gap-2 items-center">
+          <div className="p-3 border-t border-mist bg-mist/30 flex gap-2 items-center">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Ask about DSA sheets, timeline risks..."
-              className="flex-1 px-4 py-2.5 text-xs glass-input"
+              className="flex-1 px-3 py-2 text-xs theme-input"
+              style={{ height: '36px' }}
             />
             <button
               onClick={handleSend}
-              className="p-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-all cursor-pointer"
+              className="p-2 rounded-lg bg-signal hover:bg-signal/90 text-white transition-all cursor-pointer"
             >
               <Send className="h-3.5 w-3.5" />
             </button>

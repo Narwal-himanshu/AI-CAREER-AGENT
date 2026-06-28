@@ -9,14 +9,27 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from models.student import StudentOnboarding, StudentProfile, TimeAndStyle
 from models.quiz import QuizSubmission, QuizAnswerItem, QuizResponse
 from services.agent_service import agent_service
+from database import get_db_connection
 
 def run_tests():
     print("==================================================")
     print("       AI CAREER AGENT END-TO-END TEST SUITE     ")
     print("==================================================")
     
+    # Hermetic test cleanup: delete existing rows
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM skill_profiles")
+    cursor.execute("DELETE FROM students")
+    conn.commit()
+    conn.close()
+    
+    # 0. Simulate Google Sign-In bare record creation
+    firebase_uid = "mock-uid-12345"
+    student_id = agent_service.get_or_create_student(firebase_uid, "Aravind Sharma", "aravind.sharma@btech.in")
+    print(f"[OK] Auth Sync: Resolved student record for firebase_uid={firebase_uid} -> student_id={student_id}")
+
     # 1. Mock Onboarding Input
-    student_id = "test-uuid-12345"
     print("\n[1/5] Simulating Student Onboarding...")
     onboarding = StudentOnboarding(
         student_id=student_id,
@@ -39,14 +52,14 @@ def run_tests():
     )
     
     # Save the onboarding profile
-    agent_service.save_onboarding(onboarding)
+    agent_service.save_onboarding(student_id, onboarding)
     print("[OK] Onboarding profile saved in database.")
     print(f"  Student: {onboarding.profile.name} (Year {onboarding.profile.year})")
     print(f"  Career Goal: {onboarding.career_goal} | Primary Domain: {onboarding.domain_interest[0]}")
 
     # 2. Quiz Generation Test
     print("\n[2/5] Simulating Quiz Generation...")
-    quiz: QuizResponse = agent_service.generate_quiz_for_student(onboarding)
+    quiz: QuizResponse = agent_service.generate_quiz_for_student(student_id, onboarding)
     print(f"[OK] Generated {len(quiz.questions)} quiz questions successfully.")
     
     # Print a sample question
@@ -87,7 +100,7 @@ def run_tests():
     # 4. Run Analysis Pipeline
     print("\n[4/5] Running Agent Analysis Pipeline (Scoring -> Summary -> Risk)...")
     try:
-        results = agent_service.submit_and_analyse_quiz(submission)
+        results = agent_service.submit_and_analyse_quiz(submission, student_id)
         print("[OK] Analysis pipeline executed successfully.")
         
         # 5. Validate Outputs
