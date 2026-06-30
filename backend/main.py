@@ -10,6 +10,7 @@ from models.student import StudentOnboarding
 from models.quiz import QuizSubmission, QuizResponse
 from services.agent_service import agent_service
 from database import get_db_connection
+from routes.agents import router as agents_router
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +30,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(agents_router, prefix="/api/agents", tags=["Agents"])
 
 # 1. Initialize Firebase Admin SDK once at startup
 firebase_initialized = False
