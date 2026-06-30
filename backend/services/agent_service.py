@@ -8,20 +8,14 @@ from models.quiz import QuizSubmission, QuizResponse
 from models.scoring import SkillProfileOutput
 from models.summary import SummaryOutput
 from models.risk import RiskOutput
-from agents.question_agent import QuestionAgent
-from agents.scoring_agent import ScoringAgent
-from agents.summary_agent import SummaryAgent
-from agents.risk_agent import RiskAgent
+from agents.combined_agent import CombinedAgent
 from database import get_db_connection, get_or_create_student_by_firebase_uid
 
 logger = logging.getLogger(__name__)
 
 class AgentService:
     def __init__(self):
-        self.question_agent = QuestionAgent()
-        self.scoring_agent = ScoringAgent()
-        self.summary_agent = SummaryAgent()
-        self.risk_agent = RiskAgent()
+        self.agent = CombinedAgent()
 
     def get_or_create_student(self, firebase_uid: str, name: str, email: str) -> str:
         """Retrieves student_id or creates a bare student row, returning student_id."""
@@ -104,7 +98,7 @@ class AgentService:
         # Overwrite request student_id with auth-verified student_id
         onboarding.student_id = student_id
         self.save_onboarding(student_id, onboarding)
-        return self.question_agent.generate_quiz(onboarding)
+        return self.agent.generate_quiz(onboarding)
 
     def submit_and_analyse_quiz(self, submission: QuizSubmission, student_id: str) -> Dict[str, Any]:
         """
@@ -140,7 +134,7 @@ class AgentService:
         primary_domain = onboarding.domain_interest[0] if onboarding.domain_interest else "DSA/CP"
 
         # 1. Scoring & Level Classification
-        skill_profile = self.scoring_agent.score_quiz(
+        skill_profile = self.agent.score_quiz(
             submission=submission,
             year=profile.year,
             primary_domain=primary_domain,
@@ -148,13 +142,13 @@ class AgentService:
         )
 
         # 2. Profile Summary
-        summary = self.summary_agent.summarise_profile(
+        summary = self.agent.summarise_profile(
             onboarding=onboarding,
             skill_profile=skill_profile
         )
 
         # 3. Risk Assessment
-        risk = self.risk_agent.assess_risk(
+        risk = self.agent.assess_risk(
             onboarding=onboarding,
             summary=summary
         )
