@@ -354,7 +354,7 @@ function ValueGrid() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((v, i) => (
-            <div key={i} className="bg-white border-2 border-slate-200 shadow-sm p-6 rounded-2xl hover:border-signal/40 transition-all flex flex-col justify-between">
+            <div key={i} className="bg-white border border-mist shadow-xl p-6 rounded-3xl hover:border-signal/50 hover:shadow-2xl transition-all flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="h-8 w-8 rounded-lg bg-signal-tint flex items-center justify-center text-signal font-bold text-sm">
                   {i + 1}
@@ -389,7 +389,7 @@ function HowItWorks({ onStartAssessment }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
           {steps.map((s, idx) => (
-            <div key={idx} className="relative space-y-3 bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-sm">
+            <div key={idx} className="relative space-y-3 bg-white p-6 rounded-3xl border border-mist shadow-xl hover:shadow-2xl hover:border-signal/50 transition-all">
               <div className="font-mono text-4xl font-extrabold text-signal/15 tracking-tight">
                 {s.num}
               </div>
