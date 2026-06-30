@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { GraduationCap, ArrowRight, Loader2, Sparkles, BookOpen, Target, Calendar } from 'lucide-react'
-import { auth } from '../firebase'
 
 function Onboarding({ onStartQuiz, onGoHome }) {
   const [step, setStep] = useState(1)
@@ -67,9 +66,7 @@ function Onboarding({ onStartQuiz, onGoHome }) {
     }
 
     try {
-      const token = (auth.currentUser && auth.app.options.apiKey !== "AIzaSyAky5V_XMkaW9UZd3dZY8_BfldB_WSrIMY") 
-        ? await auth.currentUser.getIdToken() 
-        : 'mock-uid-123'
+      const token = 'mock-uid-123'
       const response = await fetch('http://localhost:8000/api/quiz/generate', {
         method: 'POST',
         headers: { 

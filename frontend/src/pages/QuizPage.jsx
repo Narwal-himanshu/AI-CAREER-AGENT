@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { Timer, ArrowRight, Loader2, Award, GraduationCap } from 'lucide-react'
-import { auth } from '../firebase'
 
 function QuizPage({ profile, questions, onComplete, onGoHome }) {
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -93,9 +92,7 @@ function QuizPage({ profile, questions, onComplete, onGoHome }) {
     }
 
     try {
-      const token = (auth.currentUser && auth.app.options.apiKey !== "AIzaSyAky5V_XMkaW9UZd3dZY8_BfldB_WSrIMY") 
-        ? await auth.currentUser.getIdToken() 
-        : 'mock-uid-123'
+      const token = 'mock-uid-123'
       const response = await fetch('http://localhost:8000/api/quiz/submit', {
         method: 'POST',
         headers: { 
