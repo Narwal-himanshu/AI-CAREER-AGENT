@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Home from './pages/Home'
+import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
 import QuizPage from './pages/QuizPage'
 import Dashboard from './pages/Dashboard'
@@ -18,9 +19,14 @@ function App() {
   const [quizQuestions, setQuizQuestions] = useState([])
   const [quizAnalysis, setQuizAnalysis] = useState(null)
 
-  // Handle Login trigger
+  // Handle Login trigger — show login page
   const handleLogin = async () => {
-    navigate('/onboarding')
+    navigate('/login')
+  }
+
+  // Handle Login form submit — just authenticate, no profile setup
+  const handleLoginSubmit = (mode) => {
+    navigate('/')
   }
 
   // Opportunities feed doesn't require profile setup - go straight to the page
@@ -50,7 +56,7 @@ function App() {
   }
 
   // Hide sidebar during landing page, onboarding, and quiz taking
-  const showSidebar = !['/', '/onboarding', '/quiz'].includes(location.pathname)
+  const showSidebar = !['/', '/login', '/onboarding', '/quiz'].includes(location.pathname)
 
   return (
     <div className="min-h-screen bg-paper text-ink flex">
@@ -63,13 +69,22 @@ function App() {
       <main className="flex-1 transition-all duration-300 min-h-screen">
         <Routes>
           <Route path="/" element={<Home onStartAssessment={handleLogin} onGoToOpportunities={handleGoToOpportunities} />} />
+          <Route path="/login" element={<Login onLogin={handleLoginSubmit} onGoHome={handleLogout} />} />
           <Route path="/onboarding" element={<Onboarding onStartQuiz={handleStartQuiz} onGoHome={handleLogout} />} />
           <Route path="/quiz" element={<QuizPage profile={studentProfile} questions={quizQuestions} onComplete={handleQuizComplete} onGoHome={handleLogout} />} />
-          <Route path="/dashboard" element={<Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleLogout} />} />
+          <Route path="/dashboard" element={
+            studentProfile ? <Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleLogout} /> : <Navigate to="/onboarding" replace />
+          } />
           <Route path="/opportunities" element={<Opportunities profile={studentProfile} analysis={quizAnalysis} />} />
-          <Route path="/roadmap" element={<Roadmap />} />
-          <Route path="/dsa" element={<DSA />} />
-          <Route path="/courses" element={<Courses />} />
+          <Route path="/roadmap" element={
+            studentProfile ? <Roadmap /> : <Navigate to="/onboarding" replace />
+          } />
+          <Route path="/dsa" element={
+            studentProfile ? <DSA /> : <Navigate to="/onboarding" replace />
+          } />
+          <Route path="/courses" element={
+            studentProfile ? <Courses /> : <Navigate to="/onboarding" replace />
+          } />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
