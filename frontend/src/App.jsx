@@ -24,9 +24,14 @@ function App() {
     navigate('/login')
   }
 
-  // Handle Login form submit — just authenticate, no profile setup
+  // Handle Login form submit — authenticate and redirect appropriately
   const handleLoginSubmit = (mode) => {
-    navigate('/')
+    if (mode === 'signup') {
+      navigate('/onboarding')
+    } else {
+      // mode === 'dashboard'
+      navigate('/dashboard')
+    }
   }
 
   // Opportunities feed doesn't require profile setup - go straight to the page
