@@ -23,6 +23,11 @@ function App() {
     navigate('/onboarding')
   }
 
+  // Opportunities feed doesn't require profile setup - go straight to the page
+  const handleGoToOpportunities = () => {
+    navigate('/opportunities')
+  }
+
   // Handle Log out trigger
   const handleLogout = async () => {
     setStudentProfile(null)
@@ -57,7 +62,7 @@ function App() {
       )}
       <main className="flex-1 transition-all duration-300 min-h-screen">
         <Routes>
-          <Route path="/" element={<Home onStartAssessment={handleLogin} />} />
+          <Route path="/" element={<Home onStartAssessment={handleLogin} onGoToOpportunities={handleGoToOpportunities} />} />
           <Route path="/onboarding" element={<Onboarding onStartQuiz={handleStartQuiz} onGoHome={handleLogout} />} />
           <Route path="/quiz" element={<QuizPage profile={studentProfile} questions={quizQuestions} onComplete={handleQuizComplete} onGoHome={handleLogout} />} />
           <Route path="/dashboard" element={<Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleLogout} />} />

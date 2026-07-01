@@ -16,7 +16,7 @@ function AnnouncementBar() {
 }
 
 // Sub-component 2: Sticky Navbar with Dropdowns/Mega-menus
-function Navbar({ onStartAssessment }) {
+function Navbar({ onStartAssessment, onGoToOpportunities }) {
   const [activeMenu, setActiveMenu] = useState(null) // 'product' | 'year' | 'resources' | null
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -60,7 +60,7 @@ function Navbar({ onStartAssessment }) {
                     ].map((item, i) => (
                       <button 
                         key={i} 
-                        onClick={onStartAssessment}
+                        onClick={item.name === 'Opportunities feed' ? onGoToOpportunities : onStartAssessment}
                         className="text-left group cursor-pointer hover:bg-mist p-2 rounded-xl transition-all"
                       >
                         <div className="text-xs font-bold text-ink group-hover:text-signal transition-colors">{item.name}</div>
@@ -166,10 +166,10 @@ function Navbar({ onStartAssessment }) {
         <div className="md:hidden bg-paper border-b border-mist px-6 py-4 space-y-4">
           <div className="space-y-1">
             <div className="font-bold text-xs text-slate uppercase px-2 mb-1">Product</div>
-            {['Skill assessment', 'Career roadmap', 'DSA practice', 'AI chatbot'].map((item) => (
+            {['Skill assessment', 'Career roadmap', 'DSA practice', 'Opportunities feed', 'AI chatbot'].map((item) => (
               <button 
                 key={item} 
-                onClick={() => { setMobileMenuOpen(false); onStartAssessment(); }}
+                onClick={() => { setMobileMenuOpen(false); item === 'Opportunities feed' ? onGoToOpportunities() : onStartAssessment(); }}
                 className="w-full text-left py-2 px-2 text-sm font-medium text-ink hover:bg-mist rounded-lg"
               >
                 {item}
@@ -453,7 +453,7 @@ function TrustSection() {
 }
 
 // Sub-component 8: Interactive CSS Feature Showcases
-function FeatureShowcase({ onStartAssessment }) {
+function FeatureShowcase({ onStartAssessment, onGoToOpportunities }) {
   return (
     <section className="bg-paper py-16 md:py-24 space-y-24 border-b border-mist">
       <div className="max-w-[1200px] mx-auto px-6 space-y-20">
@@ -556,7 +556,7 @@ function FeatureShowcase({ onStartAssessment }) {
             <p className="text-xs text-slate leading-relaxed">
               We scrape CTFs, hackathons, and contests globally. Downstream search agents filter them specifically matching your skill levels and domains to guarantee realistic engagement.
             </p>
-            <button onClick={onStartAssessment} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
+            <button onClick={onGoToOpportunities} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
               Browse Active Feeds &rarr;
             </button>
           </div>
@@ -580,7 +580,7 @@ function FeatureShowcase({ onStartAssessment }) {
                   <span className="text-amber-500 font-bold">2026-08-15</span>
                 </div>
                 <button 
-                  onClick={onStartAssessment}
+                  onClick={onGoToOpportunities}
                   className="px-3.5 py-1.5 bg-signal hover:bg-signal/90 text-[10px] font-bold text-white rounded-lg flex items-center gap-1"
                 >
                   Register <ExternalLink className="h-3 w-3" />
@@ -792,17 +792,17 @@ function Footer({ onStartAssessment }) {
 }
 
 // Main Page wrapper
-function Home({ onStartAssessment }) {
+function Home({ onStartAssessment, onGoToOpportunities }) {
   return (
     <div className="bg-paper min-h-screen flex flex-col text-ink antialiased">
       <AnnouncementBar />
-      <Navbar onStartAssessment={onStartAssessment} />
+      <Navbar onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} />
       <Hero onStartAssessment={onStartAssessment} />
       <LogoStrip />
       <ValueGrid />
       <HowItWorks onStartAssessment={onStartAssessment} />
       <TrustSection />
-      <FeatureShowcase onStartAssessment={onStartAssessment} />
+      <FeatureShowcase onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} />
       <ResourceCards />
       <FinalCTA onStartAssessment={onStartAssessment} />
       <Footer onStartAssessment={onStartAssessment} />
