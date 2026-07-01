@@ -20,7 +20,7 @@ function App() {
 
   // Handle Login trigger
   const handleLogin = async () => {
-    navigate('/roadmap')
+    navigate('/onboarding')
   }
 
   // Handle Log out trigger
