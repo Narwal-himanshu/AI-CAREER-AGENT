@@ -1,37 +1,48 @@
 import React, { useState } from 'react'
-import { GraduationCap, UserPlus, LogIn, ArrowRight } from 'lucide-react'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
+import { GraduationCap, UserPlus, LogIn, Loader2, Eye, EyeOff } from 'lucide-react'
 
 function Login({ onLogin, onGoHome }) {
-  const [mode, setMode] = useState('login') // 'login' or 'signup'
+  const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
+    if (!email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
+
+    setLoading(true)
     try {
+      let userCredential
       if (mode === 'login') {
-        await signInWithEmailAndPassword(auth, email, password)
-        // Login success -> redirect to dashboard
-        onLogin('dashboard')
+        userCredential = await signInWithEmailAndPassword(auth, email, password)
       } else {
-        await createUserWithEmailAndPassword(auth, email, password)
-        // Signup success -> redirect to onboarding
-        onLogin('signup')
+        userCredential = await createUserWithEmailAndPassword(auth, email, password)
       }
+      onLogin(userCredential.user)
     } catch (err) {
       console.error(err)
-      // If user doesn't exist on login, recommend signup
-      if (mode === 'login' && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential')) {
-        setError('User not found or invalid credentials. Please sign up if you do not have an account.')
-      } else if (mode === 'signup' && err.code === 'auth/email-already-in-use') {
-        setError('Email already in use. Please log in.')
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Email/Password sign-in is not enabled. Go to Firebase Console → Authentication → Sign-in method → enable Email/Password.')
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setError(mode === 'login'
+          ? 'No account found with this email. Please sign up.'
+          : 'Registration failed. This email may already be in use.')
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists. Please log in.')
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password should be at least 6 characters.')
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address.')
       } else {
         setError(err.message)
       }
@@ -80,14 +91,23 @@ function Login({ onLogin, onGoHome }) {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-mist focus:outline-none focus:border-signal text-sm transition-colors"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-mist focus:outline-none focus:border-signal text-sm transition-colors pr-10"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate hover:text-ink cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -101,8 +121,17 @@ function Login({ onLogin, onGoHome }) {
               disabled={loading}
               className="w-full mt-4 py-3.5 rounded-full bg-signal hover:bg-signal/90 text-sm font-bold text-white flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-signal/25 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? 'Processing...' : (mode === 'login' ? 'Log In' : 'Sign Up')}
-              {!loading && (mode === 'login' ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />)}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {mode === 'login' ? 'Log In' : 'Sign Up'}
+                  {mode === 'login' ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                </>
+              )}
             </button>
           </form>
 
@@ -115,7 +144,7 @@ function Login({ onLogin, onGoHome }) {
                   setMode(mode === 'login' ? 'signup' : 'login')
                   setError('')
                 }}
-                className="text-signal font-bold hover:underline"
+                className="text-signal font-bold hover:underline cursor-pointer"
               >
                 {mode === 'login' ? 'Sign up here' : 'Log in here'}
               </button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Timer, ArrowRight, Loader2, Award, GraduationCap } from 'lucide-react'
 
-function QuizPage({ profile, questions, onComplete, onGoHome }) {
+function QuizPage({ profile, questions, onComplete, onGoHome, authToken }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState({}) // maps q_id to selected option
   const [timings, setTimings] = useState({}) // maps q_id to time elapsed in seconds
@@ -92,12 +92,11 @@ function QuizPage({ profile, questions, onComplete, onGoHome }) {
     }
 
     try {
-      const token = 'mock-uid-123'
       const response = await fetch('http://localhost:8000/api/quiz/submit', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify(payload)
       })

@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { auth } from './firebase'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
@@ -15,23 +17,38 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  const [authUser, setAuthUser] = useState(null)
+  const [authToken, setAuthToken] = useState(null)
   const [studentProfile, setStudentProfile] = useState(null)
   const [quizQuestions, setQuizQuestions] = useState([])
   const [quizAnalysis, setQuizAnalysis] = useState(null)
+
+  // Listen for Firebase auth state changes
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setAuthUser(user)
+        const token = await user.getIdToken()
+        setAuthToken(token)
+      } else {
+        setAuthUser(null)
+        setAuthToken(null)
+      }
+    })
+    return () => unsub()
+  }, [])
 
   // Handle Login trigger — show login page
   const handleLogin = async () => {
     navigate('/login')
   }
 
-  // Handle Login form submit — authenticate and redirect appropriately
-  const handleLoginSubmit = (mode) => {
-    if (mode === 'signup') {
-      navigate('/onboarding')
-    } else {
-      // mode === 'dashboard'
-      navigate('/dashboard')
-    }
+  // Handle successful Firebase auth — navigate based on mode
+  const handleLoginSubmit = async (user) => {
+    const token = await user.getIdToken()
+    setAuthUser(user)
+    setAuthToken(token)
+    navigate('/')
   }
 
   // Opportunities feed doesn't require profile setup - go straight to the page
@@ -39,8 +56,11 @@ function App() {
     navigate('/opportunities')
   }
 
-  // Handle Log out trigger
+  // Handle Log out
   const handleLogout = async () => {
+    await signOut(auth)
+    setAuthUser(null)
+    setAuthToken(null)
     setStudentProfile(null)
     setQuizQuestions([])
     setQuizAnalysis(null)
@@ -74,9 +94,11 @@ function App() {
       <main className="flex-1 transition-all duration-300 min-h-screen">
         <Routes>
           <Route path="/" element={<Home onStartAssessment={handleLogin} onGoToOpportunities={handleGoToOpportunities} />} />
-          <Route path="/login" element={<Login onLogin={handleLoginSubmit} onGoHome={handleLogout} />} />
-          <Route path="/onboarding" element={<Onboarding onStartQuiz={handleStartQuiz} onGoHome={handleLogout} />} />
-          <Route path="/quiz" element={<QuizPage profile={studentProfile} questions={quizQuestions} onComplete={handleQuizComplete} onGoHome={handleLogout} />} />
+          <Route path="/login" element={
+            authUser ? <Navigate to="/" replace /> : <Login onLogin={handleLoginSubmit} onGoHome={handleLogout} />
+          } />
+          <Route path="/onboarding" element={<Onboarding onStartQuiz={handleStartQuiz} onGoHome={handleLogout} authToken={authToken} />} />
+          <Route path="/quiz" element={<QuizPage profile={studentProfile} questions={quizQuestions} onComplete={handleQuizComplete} onGoHome={handleLogout} authToken={authToken} />} />
           <Route path="/dashboard" element={
             studentProfile ? <Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleLogout} /> : <Navigate to="/onboarding" replace />
           } />
