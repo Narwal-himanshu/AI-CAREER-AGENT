@@ -4,6 +4,7 @@ import {
   ExternalLink, Code2, Milestone, Bell, Sparkles, BookOpen,
   Calendar, Flame, GraduationCap, HelpCircle
 } from 'lucide-react'
+import UserMenu from '../components/UserMenu'
 
 // Sub-component 1: Slim Announcement Bar
 function AnnouncementBar() {
@@ -16,12 +17,23 @@ function AnnouncementBar() {
 }
 
 // Sub-component 2: Sticky Navbar with Dropdowns/Mega-menus
-function Navbar({ onStartAssessment, onGoToOpportunities }) {
+function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser, onGoToProfile, onSignOut }) {
   const [activeMenu, setActiveMenu] = useState(null) // 'product' | 'year' | 'resources' | null
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleMenuToggle = (menu) => {
     setActiveMenu(activeMenu === menu ? null : menu)
+  }
+
+  // Maps each Product mega-menu feature to its real destination
+  const featureHandlers = {
+    'Skill assessment': onStartAssessment,
+    'Career roadmap': () => onFeatureNav('roadmap'),
+    'DSA practice': () => onFeatureNav('dsa'),
+    'Course recommendations': () => onFeatureNav('courses'),
+    'Opportunities feed': onGoToOpportunities,
+    'Resume builder': () => onFeatureNav('resume'),
+    'AI chatbot': () => onFeatureNav('chatbot')
   }
 
   return (
@@ -60,7 +72,7 @@ function Navbar({ onStartAssessment, onGoToOpportunities }) {
                     ].map((item, i) => (
                       <button 
                         key={i} 
-                        onClick={item.name === 'Opportunities feed' ? onGoToOpportunities : onStartAssessment}
+                        onClick={featureHandlers[item.name]}
                         className="text-left group cursor-pointer hover:bg-mist p-2 rounded-xl transition-all"
                       >
                         <div className="text-xs font-bold text-ink group-hover:text-signal transition-colors">{item.name}</div>
@@ -141,18 +153,29 @@ function Navbar({ onStartAssessment, onGoToOpportunities }) {
         {/* Right utilities & primary CTA */}
         <div className="hidden md:flex items-center gap-6">
           <Search className="h-4 w-4 text-slate hover:text-ink cursor-pointer transition-colors" />
-          <button 
-            onClick={onStartAssessment}
-            className="text-sm font-semibold text-slate hover:text-ink transition-all cursor-pointer"
-          >
-            Log in
-          </button>
-          <button 
-            onClick={onStartAssessment}
-            className="px-5 py-2.5 bg-signal hover:bg-signal/90 text-sm font-bold text-white rounded-full shadow-sm hover:shadow transition-all cursor-pointer"
-          >
-            Start free assessment
-          </button>
+          {authUser ? (
+            <UserMenu
+              email={authUser.email}
+              displayName={authUser.displayName}
+              onGoToProfile={onGoToProfile}
+              onSignOut={onSignOut}
+            />
+          ) : (
+            <>
+              <button 
+                onClick={onStartAssessment}
+                className="text-sm font-semibold text-slate hover:text-ink transition-all cursor-pointer"
+              >
+                Log in
+              </button>
+              <button 
+                onClick={onStartAssessment}
+                className="px-5 py-2.5 bg-signal hover:bg-signal/90 text-sm font-bold text-white rounded-full shadow-sm hover:shadow transition-all cursor-pointer"
+              >
+                Start free assessment
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Icon */}
@@ -169,7 +192,7 @@ function Navbar({ onStartAssessment, onGoToOpportunities }) {
             {['Skill assessment', 'Career roadmap', 'DSA practice', 'Opportunities feed', 'AI chatbot'].map((item) => (
               <button 
                 key={item} 
-                onClick={() => { setMobileMenuOpen(false); item === 'Opportunities feed' ? onGoToOpportunities() : onStartAssessment(); }}
+                onClick={() => { setMobileMenuOpen(false); featureHandlers[item](); }}
                 className="w-full text-left py-2 px-2 text-sm font-medium text-ink hover:bg-mist rounded-lg"
               >
                 {item}
@@ -189,11 +212,12 @@ function Navbar({ onStartAssessment, onGoToOpportunities }) {
 }
 
 // Sub-component 3: Hero Section with Animated Readiness Ring
-function Hero({ onStartAssessment }) {
+function Hero({ onStartAssessment, targetScore, scoreLabel }) {
   const [score, setScore] = useState(0)
 
   useEffect(() => {
-    const target = 78
+    const target = targetScore
+    setScore(0)
     const interval = setInterval(() => {
       setScore((prev) => {
         if (prev >= target) {
@@ -204,7 +228,7 @@ function Hero({ onStartAssessment }) {
       })
     }, 15)
     return () => clearInterval(interval)
-  }, [])
+  }, [targetScore])
 
   return (
     <section className="bg-paper py-16 md:py-24 border-b border-mist overflow-hidden">
@@ -291,7 +315,7 @@ function Hero({ onStartAssessment }) {
 
             <div className="text-center">
               <h3 className="text-sm font-extrabold text-ink">Readiness Classification Score</h3>
-              <p className="text-xs text-slate mt-1">Intermediate Level (Sample Student Assessment)</p>
+              <p className="text-xs text-slate mt-1">{scoreLabel}</p>
             </div>
           </div>
         </div>
@@ -453,7 +477,7 @@ function TrustSection() {
 }
 
 // Sub-component 8: Interactive CSS Feature Showcases
-function FeatureShowcase({ onStartAssessment, onGoToOpportunities }) {
+function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav }) {
   return (
     <section className="bg-paper py-16 md:py-24 space-y-24 border-b border-mist">
       <div className="max-w-[1200px] mx-auto px-6 space-y-20">
@@ -468,7 +492,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities }) {
             <p className="text-xs text-slate leading-relaxed">
               Based on your onboarding domain selection and diagnostic scores, downstream agents build a custom preparation timeline. Learn DSA trees when you have time, start projects when you have foundations.
             </p>
-            <button onClick={onStartAssessment} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
+            <button onClick={() => onFeatureNav('roadmap')} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
               Explore Roadmap Features &rarr;
             </button>
           </div>
@@ -506,7 +530,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities }) {
             <p className="text-xs text-slate leading-relaxed">
               Track your LeetCode and CodeChef daily progress. Filter problems by Easy, Medium, and Hard, synced with a streak calendar that records daily solve consistency and alerts you to gaps.
             </p>
-            <button onClick={onStartAssessment} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
+            <button onClick={() => onFeatureNav('dsa')} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
               Practice DSA &rarr;
             </button>
           </div>
@@ -600,7 +624,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities }) {
             <p className="text-xs text-slate leading-relaxed">
               Compile your completed DSA problems, project links, and CGPA into an ATS-friendly resume layout. Download a validated PDF that matches company onboarding requirements.
             </p>
-            <button onClick={onStartAssessment} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
+            <button onClick={() => onFeatureNav('resume')} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
               Build Resume &rarr;
             </button>
           </div>
@@ -792,17 +816,33 @@ function Footer({ onStartAssessment }) {
 }
 
 // Main Page wrapper
-function Home({ onStartAssessment, onGoToOpportunities }) {
+function Home({
+  onStartAssessment,
+  onGoToOpportunities,
+  onFeatureNav,
+  authUser,
+  onGoToProfile,
+  onSignOut,
+  readinessScore = 0,
+  readinessLabel = ''
+}) {
   return (
     <div className="bg-paper min-h-screen flex flex-col text-ink antialiased">
       <AnnouncementBar />
-      <Navbar onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} />
-      <Hero onStartAssessment={onStartAssessment} />
+      <Navbar
+        onStartAssessment={onStartAssessment}
+        onGoToOpportunities={onGoToOpportunities}
+        onFeatureNav={onFeatureNav}
+        authUser={authUser}
+        onGoToProfile={onGoToProfile}
+        onSignOut={onSignOut}
+      />
+      <Hero onStartAssessment={onStartAssessment} targetScore={readinessScore} scoreLabel={readinessLabel} />
       <LogoStrip />
       <ValueGrid />
       <HowItWorks onStartAssessment={onStartAssessment} />
       <TrustSection />
-      <FeatureShowcase onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} />
+      <FeatureShowcase onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} onFeatureNav={onFeatureNav} />
       <ResourceCards />
       <FinalCTA onStartAssessment={onStartAssessment} />
       <Footer onStartAssessment={onStartAssessment} />

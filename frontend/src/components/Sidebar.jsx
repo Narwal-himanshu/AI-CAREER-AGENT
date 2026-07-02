@@ -1,28 +1,47 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Award, RefreshCw, GraduationCap } from 'lucide-react'
+import { LayoutDashboard, Award, RefreshCw, GraduationCap, Milestone, Code2, BookOpen, FileText } from 'lucide-react'
+import UserMenu from './UserMenu'
 
-function Sidebar({ onRestart, onGoHome }) {
+function Sidebar({ onRestart, onGoHome, email, displayName, onGoToProfile, onSignOut }) {
   const navigate = useNavigate()
   const location = useLocation()
 
   const menuItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
+    { id: 'roadmap', name: 'Career Roadmap', icon: Milestone },
+    { id: 'dsa', name: 'DSA Practice', icon: Code2 },
+    { id: 'courses', name: 'Courses', icon: BookOpen },
     { id: 'opportunities', name: 'Opportunities', icon: Award },
+    { id: 'resume', name: 'Resume Builder', icon: FileText },
   ]
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-mist bg-paper md:block">
       <div className="flex h-full flex-col justify-between p-6">
         <div>
-          <div onClick={onGoHome} className="flex items-center gap-3 px-2 py-4 cursor-pointer hover:opacity-85 transition-opacity">
-            <GraduationCap className="h-7 w-7 text-signal" />
-            <span className="font-display font-extrabold text-xl text-ink tracking-tight">
-              CareerAgent
-            </span>
+          <div className="flex items-center justify-between gap-2 px-2 py-4">
+            <div onClick={onGoHome} className="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity">
+              <GraduationCap className="h-7 w-7 text-signal" />
+              <span className="font-display font-extrabold text-xl text-ink tracking-tight">
+                CareerAgent
+              </span>
+            </div>
           </div>
 
-          <nav className="mt-8 space-y-2">
+          {email && (
+            <div className="px-2 pb-4">
+              <UserMenu
+                email={email}
+                displayName={displayName}
+                onGoToProfile={onGoToProfile}
+                onSignOut={onSignOut}
+                align="left"
+              />
+            </div>
+          )}
+
+          <nav className="mt-2 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === `/${item.id}`

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Timer, ArrowRight, Loader2, Award, GraduationCap } from 'lucide-react'
+import { evaluateQuizLocally } from '../data/quizBank'
 
-function QuizPage({ profile, questions, onComplete, onGoHome, authToken }) {
+function QuizPage({ profile, questions, onComplete, onGoHome, onQuizFinished }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [answers, setAnswers] = useState({}) // maps q_id to selected option
   const [timings, setTimings] = useState({}) // maps q_id to time elapsed in seconds
@@ -92,25 +93,15 @@ function QuizPage({ profile, questions, onComplete, onGoHome, authToken }) {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/quiz/submit', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        const errDetail = await response.json()
-        throw new Error(errDetail.detail || 'Failed to submit quiz assessment.')
+      // Assessment is scored locally (5-question fixed quiz) — no backend call required.
+      const analysisData = evaluateQuizLocally(profile, quiz_answers)
+      if (onQuizFinished) {
+        await onQuizFinished(profile, analysisData)
       }
-
-      const analysisData = await response.json()
       onComplete(analysisData)
     } catch (err) {
       console.error(err)
-      setError(err.message || 'Submission failed. Check API server connection.')
+      setError(err.message || 'Something went wrong while scoring your assessment.')
     } finally {
       setSubmitting(false)
     }

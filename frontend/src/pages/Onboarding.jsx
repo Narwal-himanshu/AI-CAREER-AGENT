@@ -1,24 +1,28 @@
 import React, { useState } from 'react'
 import { GraduationCap, ArrowRight, Loader2, Sparkles, BookOpen, Target, Calendar } from 'lucide-react'
+import { QUIZ_QUESTIONS } from '../data/quizBank'
 
-function Onboarding({ onStartQuiz, onGoHome, authToken }) {
+function Onboarding({ onStartQuiz, onGoHome, authUser, userDoc, onSaveProfile }) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Onboarding Form State
+  const savedProfile = userDoc?.profile || {}
+
+  // Onboarding Form State (prefilled with anything already saved to the Firestore profile)
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    year: 2,
-    branch: 'CSE',
-    cgpa: 8.0,
-    college: '',
-    college_tier: 'Tier-2',
-    domain_interest: ['DSA/CP'],
-    career_goal: 'Placement',
-    hours_per_day: 2,
-    preferred_style: ['Video', 'Projects']
+    name: savedProfile.name || '',
+    age: savedProfile.age || '',
+    email: authUser?.email || '',
+    year: savedProfile.year || 2,
+    branch: savedProfile.branch || 'CSE',
+    cgpa: savedProfile.cgpa || 8.0,
+    college: savedProfile.college || '',
+    college_tier: savedProfile.college_tier || 'Tier-2',
+    domain_interest: savedProfile.domain_interest?.length ? savedProfile.domain_interest : ['DSA/CP'],
+    career_goal: savedProfile.career_goal || 'Placement',
+    hours_per_day: savedProfile.hours_per_day || 2,
+    preferred_style: savedProfile.preferred_style?.length ? savedProfile.preferred_style : ['Video', 'Projects']
   })
 
   const handleChange = (e) => {
@@ -37,7 +41,7 @@ function Onboarding({ onStartQuiz, onGoHome, authToken }) {
   }
 
   const validateStep1 = () => {
-    return formData.name && formData.email && formData.college && formData.cgpa >= 0 && formData.cgpa <= 10
+    return formData.name && formData.email && formData.age && formData.college && formData.cgpa >= 0 && formData.cgpa <= 10
   }
 
   const handleSubmit = async () => {
@@ -51,6 +55,7 @@ function Onboarding({ onStartQuiz, onGoHome, authToken }) {
       profile: {
         name: formData.name,
         email: formData.email,
+        age: Number(formData.age),
         year: Number(formData.year),
         branch: formData.branch,
         cgpa: Number(formData.cgpa),
@@ -66,25 +71,29 @@ function Onboarding({ onStartQuiz, onGoHome, authToken }) {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/quiz/generate', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        const errDetail = await response.json()
-        throw new Error(errDetail.detail || 'Failed to generate assessment quiz.')
+      // Persist the profile fields (name, age, course, interests, goal, etc.) to Firestore
+      // so the "My Profile" page and the readiness score stay in sync.
+      if (onSaveProfile) {
+        await onSaveProfile({
+          name: formData.name,
+          age: Number(formData.age),
+          year: Number(formData.year),
+          branch: formData.branch,
+          cgpa: Number(formData.cgpa),
+          college: formData.college,
+          college_tier: formData.college_tier,
+          domain_interest: formData.domain_interest,
+          career_goal: formData.career_goal,
+          hours_per_day: Number(formData.hours_per_day),
+          preferred_style: formData.preferred_style
+        })
       }
 
-      const quizData = await response.json()
-      onStartQuiz(payload, quizData.questions)
+      // Assessment is currently a fixed 5-question local quiz — no backend call required.
+      onStartQuiz(payload, QUIZ_QUESTIONS)
     } catch (err) {
       console.error(err)
-      setError(err.message || 'Connecting to backend failed. Make sure the FastAPI server is running on port 8000.')
+      setError(err.message || 'Something went wrong while saving your profile.')
     } finally {
       setLoading(false)
     }
@@ -151,6 +160,20 @@ function Onboarding({ onStartQuiz, onGoHome, authToken }) {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="e.g. aravind@student.in" 
+                    className="w-full theme-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate uppercase tracking-wider mb-1">Age</label>
+                  <input 
+                    type="number" 
+                    name="age"
+                    min="15"
+                    max="99"
+                    value={formData.age}
+                    onChange={handleChange}
+                    placeholder="e.g. 20" 
                     className="w-full theme-input"
                   />
                 </div>
