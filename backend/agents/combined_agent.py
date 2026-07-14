@@ -491,16 +491,101 @@ Please generate the risk assessment JSON following the RiskOutput schema.
                     {
                         "question_id": "q_001",
                         "question_text": "What is the time complexity of binary search on a sorted array of size n?",
-                        "options": {
-                            "A": "O(1)",
-                            "B": "O(log n)",
-                            "C": "O(n)",
-                            "D": "O(n log n)"
-                        },
+                        "options": {"A": "O(1)", "B": "O(log n)", "C": "O(n)", "D": "O(n log n)"},
                         "correct_option": "B",
                         "explanation": "Binary search divides the search interval in half each time, resulting in logarithmic O(log n) time complexity.",
                         "topic": "Searching",
                         "difficulty": "Easy",
+                        "estimated_time_seconds": 30
+                    },
+                    {
+                        "question_id": "q_002",
+                        "question_text": "Which data structure uses LIFO (Last In First Out) ordering?",
+                        "options": {"A": "Queue", "B": "Stack", "C": "Linked List", "D": "Heap"},
+                        "correct_option": "B",
+                        "explanation": "A stack follows Last In First Out ordering, where the most recently added element is removed first.",
+                        "topic": "Stacks/Queues",
+                        "difficulty": "Easy",
+                        "estimated_time_seconds": 25
+                    },
+                    {
+                        "question_id": "q_003",
+                        "question_text": "What is the worst-case time complexity of QuickSort?",
+                        "options": {"A": "O(n log n)", "B": "O(n)", "C": "O(n^2)", "D": "O(log n)"},
+                        "correct_option": "C",
+                        "explanation": "QuickSort degrades to O(n^2) in the worst case when the pivot repeatedly splits the array unevenly.",
+                        "topic": "Sorting",
+                        "difficulty": "Medium",
+                        "estimated_time_seconds": 40
+                    },
+                    {
+                        "question_id": "q_004",
+                        "question_text": "In OOP, what principle allows a subclass to provide a specific implementation of a method already defined in its parent class?",
+                        "options": {"A": "Encapsulation", "B": "Abstraction", "C": "Overriding", "D": "Overloading"},
+                        "correct_option": "C",
+                        "explanation": "Method overriding lets a subclass redefine a method inherited from its parent class with a specific implementation.",
+                        "topic": "OOP",
+                        "difficulty": "Easy",
+                        "estimated_time_seconds": 30
+                    },
+                    {
+                        "question_id": "q_005",
+                        "question_text": "Which traversal of a Binary Search Tree visits nodes in ascending sorted order?",
+                        "options": {"A": "Pre-order", "B": "In-order", "C": "Post-order", "D": "Level-order"},
+                        "correct_option": "B",
+                        "explanation": "In-order traversal (Left, Root, Right) of a BST visits nodes in ascending sorted order.",
+                        "topic": "Trees",
+                        "difficulty": "Medium",
+                        "estimated_time_seconds": 35
+                    },
+                    {
+                        "question_id": "q_006",
+                        "question_text": "What technique does Dynamic Programming primarily use to avoid recomputation?",
+                        "options": {"A": "Recursion without base cases", "B": "Memoization / storing subproblem results", "C": "Random sampling", "D": "Greedy selection"},
+                        "correct_option": "B",
+                        "explanation": "Dynamic Programming stores results of overlapping subproblems (memoization or tabulation) to avoid redundant recomputation.",
+                        "topic": "Dynamic Programming",
+                        "difficulty": "Hard",
+                        "estimated_time_seconds": 45
+                    },
+                    {
+                        "question_id": "q_007",
+                        "question_text": "Which HTTP method is typically used to update an existing resource entirely?",
+                        "options": {"A": "GET", "B": "POST", "C": "PUT", "D": "DELETE"},
+                        "correct_option": "C",
+                        "explanation": "PUT is conventionally used to replace/update an existing resource entirely in REST APIs.",
+                        "topic": "Programming Fundamentals",
+                        "difficulty": "Easy",
+                        "estimated_time_seconds": 25
+                    },
+                    {
+                        "question_id": "q_008",
+                        "question_text": "A sequence follows the pattern 2, 6, 12, 20, 30, ... What is the next number?",
+                        "options": {"A": "40", "B": "42", "C": "36", "D": "44"},
+                        "correct_option": "B",
+                        "explanation": "The differences between terms increase by 2 each time (4, 6, 8, 10, 12), so the next term is 30 + 12 = 42.",
+                        "topic": "Logical Reasoning",
+                        "difficulty": "Medium",
+                        "estimated_time_seconds": 40
+                    },
+                    {
+                        "question_id": "q_009",
+                        "question_text": "Which graph algorithm finds the shortest path from a single source in a graph with non-negative edge weights?",
+                        "options": {"A": "Depth First Search", "B": "Dijkstra's Algorithm", "C": "Kruskal's Algorithm", "D": "Bubble Sort"},
+                        "correct_option": "B",
+                        "explanation": "Dijkstra's Algorithm computes shortest paths from a single source in graphs with non-negative edge weights.",
+                        "topic": "Graphs",
+                        "difficulty": "Hard",
+                        "estimated_time_seconds": 45
+                    },
+                    {
+                        "question_id": "q_010",
+                        "question_text": "What does the acronym CIA stand for in the context of information security?",
+                        "options": {"A": "Confidentiality, Integrity, Availability", "B": "Central Intelligence Agency", "C": "Code, Interface, Application", "D": "Cache, Index, Array"},
+                        "correct_option": "A",
+                        "explanation": "The CIA triad — Confidentiality, Integrity, Availability — is the foundational model for information security.",
+                        "topic": "Domain Specific",
+                        "difficulty": "Medium",
                         "estimated_time_seconds": 30
                     }
                 ]

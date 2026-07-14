@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 import logging
 import os
+from dotenv import load_dotenv
+
+# Load .env before ANY module reads env vars (agents are imported below)
+load_dotenv()
+
 import firebase_admin
 from firebase_admin import auth, credentials
 

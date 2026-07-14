@@ -4,6 +4,7 @@ import logging
 import httpx
 import time
 from typing import Dict, Any, List
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import ValidationError
 
@@ -63,10 +64,58 @@ def get_llm():
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         temperature=0.3,
-        api_key=os.getenv("GEMINI_API_KEY")
+        api_key=os.getenv("GEMINI_API_KEY"),
+        max_retries=0,
+        # Force Gemini to return raw JSON instead of markdown-wrapped text.
+        response_mime_type="application/json",
     )
 
+
+class AgentProcessingError(Exception):
+    pass
+
+
+def _extract_json(content: str) -> str:
+    """Best-effort extraction of a JSON object from an LLM response, in case
+    response_mime_type is ignored and the model still wraps the payload in
+    markdown fences or extra prose."""
+    content = content.strip()
+    if "```json" in content:
+        return content.split("```json")[1].split("```")[0].strip()
+    if "```" in content:
+        return content.split("```")[1].split("```")[0].strip()
+    start, end = content.find("{"), content.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return content[start:end + 1]
+    return content
+
+
 class CourseRecommendationAgent:
+
+    def _generate_mock(self, request: CourseRecommendationRequest) -> CourseRecommendationResponse:
+        curated = CURATED_COURSES.get(request.domain, [])
+        recommendations = []
+        for i, c in enumerate(curated[:5]):
+            recommendations.append({
+                'rank': i + 1,
+                'title': c['name'],
+                'platform': c['platform'],
+                'url': c['url'],
+                'type': 'MOOC',
+                'duration_hours': c['duration_hours'],
+                'is_free': True,
+                'why_recommended': f'Great for building {request.domain} fundamentals',
+                'best_for': f'{request.level} learners',
+                'weekly_hours_needed': min(request.hours_per_day * 7, 10),
+                'completion_weeks': max(1, c['duration_hours'] // (request.hours_per_day * 7 or 1))
+            })
+        return CourseRecommendationResponse(
+            domain=request.domain,
+            level=request.level,
+            recommendations=recommendations,
+            learning_path=f'Start with the beginner-friendly resources, then progress to advanced {request.domain} topics.',
+            total_hours=sum(r['duration_hours'] for r in recommendations)
+        )
 
     async def fetch_youtube_courses(self, domain: str, level: str) -> List[Dict[str, Any]]:
         api_key = os.getenv("YOUTUBE_API_KEY")
@@ -189,23 +238,41 @@ Ensure the JSON is valid and conforms exactly to this structure without markdown
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
         try:
-            response = await llm.ainvoke(full_prompt)
-            content = response.content
-
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-
-            data = json.loads(content)
-            result = CourseRecommendationResponse(**data)
-
+            result = await self._invoke_with_retry(llm, full_prompt)
             # Cache the result
             course_cache.set(cache_key, result)
             return result
 
         except Exception as e:
-            logger.error(f"Error generating course recommendations: {e}")
-            raise Exception(f"Failed to generate course recommendations: {e}")
+            logger.warning(f"Gemini course recommendation failed after retries, using mock: {e}")
+            result = self._generate_mock(request)
+            course_cache.set(cache_key, result)
+            return result
+
+    @retry(
+        wait=wait_exponential(multiplier=1, min=1, max=4),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception_type(AgentProcessingError),
+        reraise=True,
+    )
+    async def _invoke_with_retry(self, llm, full_prompt: str) -> CourseRecommendationResponse:
+        """Call Gemini and parse+validate the JSON. Retries on parse/validation
+        failures (malformed AI output) and transient API errors."""
+        try:
+            response = await llm.ainvoke(full_prompt)
+            content = _extract_json(response.content)
+            data = json.loads(content)
+            return CourseRecommendationResponse(**data)
+        except json.JSONDecodeError as e:
+            logger.error(f"Course agent: failed to parse Gemini JSON: {e}")
+            raise AgentProcessingError(f"Invalid JSON from Gemini: {e}")
+        except ValidationError as e:
+            logger.error(f"Course agent: Gemini JSON failed schema validation: {e}")
+            raise AgentProcessingError(f"Schema validation failed: {e}")
+        except AgentProcessingError:
+            raise
+        except Exception as e:
+            logger.error(f"Course agent: Gemini call failed: {e}")
+            raise AgentProcessingError(f"Gemini call failed: {e}")
 
 course_agent = CourseRecommendationAgent()

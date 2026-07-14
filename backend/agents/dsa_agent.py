@@ -3,6 +3,7 @@ import json
 import logging
 import httpx
 from typing import Dict, Any
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import ValidationError
 
@@ -39,10 +40,56 @@ def get_llm():
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         temperature=0.4,
-        api_key=os.getenv("GEMINI_API_KEY")
+        api_key=os.getenv("GEMINI_API_KEY"),
+        max_retries=0,
+        # Force Gemini to return raw JSON instead of markdown-wrapped text so we
+        # don't have to rely on brittle string-splitting to extract the payload.
+        response_mime_type="application/json",
     )
 
+
+class AgentProcessingError(Exception):
+    pass
+
+
+def _extract_json(content: str) -> str:
+    """Best-effort extraction of a JSON object from an LLM response, in case
+    response_mime_type is ignored by a given model/SDK version and the model
+    still wraps the payload in markdown fences or extra prose."""
+    content = content.strip()
+    if "```json" in content:
+        return content.split("```json")[1].split("```")[0].strip()
+    if "```" in content:
+        return content.split("```")[1].split("```")[0].strip()
+    # Fallback: grab the outermost {...} block
+    start, end = content.find("{"), content.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return content[start:end + 1]
+    return content
+
+
 class DSAPracticeAgent:
+
+    def _generate_mock_sheet(self, request: DSAPracticeRequest) -> DSAPracticeResponse:
+        problems = [
+            {'order': 1, 'topic': 'Arrays', 'problem_title': 'Two Sum', 'problem_id': '1', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/two-sum/', 'why_important': 'Classic hashmap problem for O(n) thinking', 'approach_hint': 'Use a hashmap to store complements', 'time_to_solve_minutes': 15, 'tags': ['Array', 'Hash Table']},
+            {'order': 2, 'topic': 'Arrays', 'problem_title': 'Best Time to Buy and Sell Stock', 'problem_id': '121', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock/', 'why_important': 'Sliding window / DP intro', 'approach_hint': 'Track min price and max profit', 'time_to_solve_minutes': 20, 'tags': ['Array', 'DP']},
+            {'order': 3, 'topic': 'Strings', 'problem_title': 'Valid Parentheses', 'problem_id': '20', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/valid-parentheses/', 'why_important': 'Stack application', 'approach_hint': 'Use a stack to match brackets', 'time_to_solve_minutes': 15, 'tags': ['String', 'Stack']},
+            {'order': 4, 'topic': 'Linked Lists', 'problem_title': 'Reverse Linked List', 'problem_id': '206', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/reverse-linked-list/', 'why_important': 'Pointer manipulation fundamentals', 'approach_hint': 'Iteratively reverse pointers', 'time_to_solve_minutes': 15, 'tags': ['Linked List']},
+            {'order': 5, 'topic': 'Trees', 'problem_title': 'Maximum Depth of Binary Tree', 'problem_id': '104', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/maximum-depth-of-binary-tree/', 'why_important': 'Recursion on trees', 'approach_hint': 'DFS: max(left, right) + 1', 'time_to_solve_minutes': 10, 'tags': ['Tree', 'DFS']},
+            {'order': 6, 'topic': 'Searching', 'problem_title': 'Binary Search', 'problem_id': '704', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/binary-search/', 'why_important': 'O(log n) search', 'approach_hint': 'Standard binary search', 'time_to_solve_minutes': 10, 'tags': ['Binary Search']},
+            {'order': 7, 'topic': 'DP', 'problem_title': 'Climbing Stairs', 'problem_id': '70', 'difficulty': 'EASY', 'leetcode_url': 'https://leetcode.com/problems/climbing-stairs/', 'why_important': 'Fibonacci-style DP', 'approach_hint': 'dp[n] = dp[n-1] + dp[n-2]', 'time_to_solve_minutes': 15, 'tags': ['DP']},
+            {'order': 8, 'topic': 'Graphs', 'problem_title': 'Number of Islands', 'problem_id': '200', 'difficulty': 'MEDIUM', 'leetcode_url': 'https://leetcode.com/problems/number-of-islands/', 'why_important': 'Grid DFS/BFS classic', 'approach_hint': 'DFS on each 1 and mark visited', 'time_to_solve_minutes': 25, 'tags': ['Graph', 'DFS']},
+            {'order': 9, 'topic': 'Heaps', 'problem_title': 'Top K Frequent Elements', 'problem_id': '347', 'difficulty': 'MEDIUM', 'leetcode_url': 'https://leetcode.com/problems/top-k-frequent-elements/', 'why_important': 'Heap / bucket sort', 'approach_hint': 'Count frequencies then use heap', 'time_to_solve_minutes': 20, 'tags': ['Heap', 'Hash Table']},
+            {'order': 10, 'topic': 'Sliding Window', 'problem_title': 'Longest Substring Without Repeating Characters', 'problem_id': '3', 'difficulty': 'MEDIUM', 'leetcode_url': 'https://leetcode.com/problems/longest-substring-without-repeating-characters/', 'why_important': 'Sliding window pattern', 'approach_hint': 'Use two pointers + set', 'time_to_solve_minutes': 20, 'tags': ['Sliding Window', 'String']},
+        ]
+        return DSAPracticeResponse(
+            level=request.level,
+            topic_focus=request.domain,
+            sheet=problems,
+            study_plan='Solve 2-3 problems daily, focusing on one topic at a time. Review solutions and track patterns.',
+            daily_target='2-3 problems per day'
+        )
 
     async def fetch_leetcode_problems(self, level: str, limit: int = 50) -> Dict[str, Any]:
         url = "https://leetcode.com/graphql"
@@ -162,23 +209,41 @@ Ensure the JSON is valid and conforms exactly to this structure without markdown
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
         try:
-            response = await llm.ainvoke(full_prompt)
-            content = response.content
-
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-
-            data = json.loads(content)
-            result = DSAPracticeResponse(**data)
-
+            result = await self._invoke_with_retry(llm, full_prompt)
             # Cache the result
             dsa_cache.set(cache_key, result)
             return result
 
         except Exception as e:
-            logger.error(f"Error curating DSA sheet with Gemini: {e}")
-            raise Exception(f"Failed to generate DSA sheet: {e}")
+            logger.warning(f"Gemini DSA curation failed after retries, using mock: {e}")
+            result = self._generate_mock_sheet(request)
+            dsa_cache.set(cache_key, result)
+            return result
+
+    @retry(
+        wait=wait_exponential(multiplier=1, min=1, max=4),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception_type(AgentProcessingError),
+        reraise=True,
+    )
+    async def _invoke_with_retry(self, llm, full_prompt: str) -> DSAPracticeResponse:
+        """Call Gemini and parse+validate the JSON. Retries on parse/validation
+        failures (malformed AI output) and transient API errors."""
+        try:
+            response = await llm.ainvoke(full_prompt)
+            content = _extract_json(response.content)
+            data = json.loads(content)
+            return DSAPracticeResponse(**data)
+        except json.JSONDecodeError as e:
+            logger.error(f"DSA agent: failed to parse Gemini JSON: {e}")
+            raise AgentProcessingError(f"Invalid JSON from Gemini: {e}")
+        except ValidationError as e:
+            logger.error(f"DSA agent: Gemini JSON failed schema validation: {e}")
+            raise AgentProcessingError(f"Schema validation failed: {e}")
+        except AgentProcessingError:
+            raise
+        except Exception as e:
+            logger.error(f"DSA agent: Gemini call failed: {e}")
+            raise AgentProcessingError(f"Gemini call failed: {e}")
 
 dsa_agent = DSAPracticeAgent()

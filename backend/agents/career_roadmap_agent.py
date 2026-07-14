@@ -15,30 +15,42 @@ def get_llm():
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         temperature=0.4,
-        api_key=os.getenv("GEMINI_API_KEY")
+        api_key=os.getenv("GEMINI_API_KEY"),
+        max_retries=0,
+        # Force Gemini to return raw JSON instead of markdown-wrapped text.
+        response_mime_type="application/json",
     )
 
 class AgentProcessingError(Exception):
     pass
 
+
+def _extract_json(content: str) -> str:
+    """Best-effort extraction of a JSON object from an LLM response, in case
+    response_mime_type is ignored and the model still wraps the payload in
+    markdown fences or extra prose."""
+    content = content.strip()
+    if "```json" in content:
+        return content.split("```json")[1].split("```")[0].strip()
+    if "```" in content:
+        return content.split("```")[1].split("```")[0].strip()
+    start, end = content.find("{"), content.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return content[start:end + 1]
+    return content
+
+
 @retry(
-    wait=wait_exponential(multiplier=1, min=2, max=10),
+    wait=wait_exponential(multiplier=1, min=1, max=4),
     stop=stop_after_attempt(3),
-    retry=retry_if_exception_type((AgentProcessingError, Exception)),
+    retry=retry_if_exception_type(AgentProcessingError),
     reraise=True
 )
 def _generate_roadmap_with_retry(prompt: str) -> CareerRoadmapResponse:
     llm = get_llm()
     try:
         response = llm.invoke(prompt)
-        content = response.content
-
-        # Simple heuristic to extract JSON block if it's markdown wrapped
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
-
+        content = _extract_json(response.content)
         data = json.loads(content)
         return CareerRoadmapResponse(**data)
     except ValidationError as e:
@@ -53,6 +65,29 @@ def _generate_roadmap_with_retry(prompt: str) -> CareerRoadmapResponse:
         raise AgentProcessingError(f"Error calling Gemini API: {e}")
 
 class CareerRoadmapAgent:
+    def _generate_mock(self, request: CareerRoadmapRequest) -> CareerRoadmapResponse:
+        year_map = {1: 'Foundations', 2: 'Skill Building', 3: 'Specialisation', 4: 'Launch'}
+        theme = year_map.get(request.year, 'Skill Building')
+        return CareerRoadmapResponse(
+            student_name=request.name,
+            domain=request.domain,
+            career_goal=request.career_goal,
+            total_years=4 - request.year + 1,
+            plan=[{
+                'year': y,
+                'theme': f'Year {y} Focus',
+                'focus_areas': [f'{request.domain} fundamentals', 'Communication skills', 'Networking'] if y == request.year else ['Advanced topics', 'Projects', 'Interview prep'],
+                'monthly_goals': [f'Complete {request.domain} module', 'Build a mini project', 'Solve practice problems', 'Review and revise'],
+                'skills_to_learn': ['Core concepts', 'Problem solving', 'Tools & frameworks'],
+                'projects_to_build': [{'title': f'{request.domain} Capstone', 'description': f'A project applying {request.domain} skills', 'tech_stack': ['Python', 'React', 'SQL']}],
+                'resources': [{'name': f'Best {request.domain} Course', 'type': 'Course', 'url': 'https://coursera.org', 'is_free': True}],
+                'milestone': f'Complete {request.domain} foundation',
+                'dsa_target': 'Solve 100 problems',
+                'internship_target': 'Apply for internships' if y >= 3 else None
+            } for y in range(request.year, 5)],
+            quick_start=f"Start with {request.domain} fundamentals and build a strong foundation in your {['first','second','third','fourth'][request.year-1]} year."
+        )
+
     def generate_roadmap(self, request: CareerRoadmapRequest) -> CareerRoadmapResponse:
         system_prompt = (
             "You are an expert career counsellor for Indian BTech CS students. "
@@ -114,13 +149,7 @@ Ensure the JSON is valid and conforms exactly to this structure.
         try:
             return _generate_roadmap_with_retry(full_prompt)
         except Exception as e:
-            # Re-prompt once with schema example appended dynamically if the retries fail
-            logger.warning("Retrying with explicit schema example appended.")
-            fallback_prompt = full_prompt + "\n\nCRITICAL: Your previous response failed to parse. Make sure you output ONLY valid JSON without any leading/trailing text or markdown wrappers."
-            try:
-                return _generate_roadmap_with_retry(fallback_prompt)
-            except Exception as final_e:
-                logger.error(f"Failed to generate roadmap after fallback: {final_e}")
-                raise final_e
+            logger.warning(f"LLM roadmap failed, using mock: {e}")
+            return self._generate_mock(request)
 
 career_roadmap_agent = CareerRoadmapAgent()

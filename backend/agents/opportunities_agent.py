@@ -38,7 +38,8 @@ def get_llm():
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         temperature=0.3,
-        api_key=os.getenv("GEMINI_API_KEY")
+        api_key=os.getenv("GEMINI_API_KEY"),
+        max_retries=0
     )
 
 class OpportunitiesAgent:
