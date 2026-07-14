@@ -125,6 +125,11 @@ function App() {
     navigate('/')
   }
 
+  // Navigate to home without logging out
+  const handleNavigateHome = () => {
+    navigate('/')
+  }
+
   // Restart the assessment (does NOT sign the user out — just clears the quiz state)
   const handleRestartAssessment = () => {
     setStudentProfile(null)
@@ -175,7 +180,7 @@ function App() {
       {showSidebar && (
         <Sidebar
           onRestart={handleRestartAssessment}
-          onGoHome={handleLogout}
+          onGoHome={handleNavigateHome}
           email={authUser?.email}
           displayName={authUser?.displayName}
           onGoToProfile={handleGoToProfile}
@@ -197,13 +202,13 @@ function App() {
             />
           } />
           <Route path="/login" element={
-            authUser ? <Navigate to="/" replace /> : <Login onLogin={handleLoginSubmit} onGoHome={handleLogout} />
+            authUser ? <Navigate to="/" replace /> : <Login onLogin={handleLoginSubmit} onGoHome={handleNavigateHome} />
           } />
           <Route path="/onboarding" element={
             <Onboarding
               key={userDoc ? 'ready' : 'loading'}
               onStartQuiz={handleStartQuiz}
-              onGoHome={handleLogout}
+              onGoHome={handleNavigateHome}
               authUser={authUser}
               userDoc={userDoc}
               onSaveProfile={handleSaveProfile}
@@ -214,7 +219,7 @@ function App() {
               profile={studentProfile}
               questions={quizQuestions}
               onComplete={handleQuizComplete}
-              onGoHome={handleLogout}
+              onGoHome={handleNavigateHome}
               onQuizFinished={handleQuizFinished}
             />
           } />
