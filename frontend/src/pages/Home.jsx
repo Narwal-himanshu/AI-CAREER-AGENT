@@ -4,6 +4,7 @@ import {
   ExternalLink, Code2, Milestone, Bell, Sparkles, BookOpen,
   Calendar, Flame, GraduationCap, HelpCircle
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import UserMenu from '../components/UserMenu'
 
 // Sub-component 1: Slim Announcement Bar
@@ -41,12 +42,12 @@ function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         
         {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer">
+        <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity">
           <GraduationCap className="h-7 w-7 text-signal" />
           <span className="font-sans font-extrabold text-xl text-ink tracking-tight">
             CareerAgent
           </span>
-        </div>
+        </Link>
 
         {/* Center Navigation links */}
         <nav className="hidden md:flex items-center gap-8">
@@ -778,10 +779,10 @@ function Footer({ onStartAssessment }) {
           </div>
 
           <div className="space-y-4 font-sans">
-            <div className="flex items-center gap-2 mb-2">
+            <Link to="/" className="flex items-center gap-2 mb-2 hover:opacity-85 transition-opacity w-max">
               <GraduationCap className="h-6 w-6 text-signal" />
               <span className="font-extrabold text-sm text-ink">CareerAgent</span>
-            </div>
+            </Link>
             <p className="text-[11px] text-slate leading-relaxed">
               Personalized career guidelines tailored specifically for BTech CS students in India.
             </p>
