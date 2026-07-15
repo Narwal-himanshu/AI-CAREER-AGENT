@@ -13,7 +13,7 @@ from models.schemas import (
 )
 
 from agents.career_roadmap_agent import career_roadmap_agent
-from agents.dsa_agent import dsa_agent
+from agents.dsa_agent import dsa_agent, ALL_TOPIC_NAMES
 from agents.course_agent import course_agent
 from agents.opportunities_agent import opportunities_agent
 
@@ -46,6 +46,10 @@ async def generate_dsa_sheet(request: DSAPracticeRequest):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={"error": "Service temporarily unavailable", "detail": str(e)}
         )
+
+@router.get("/dsa-topics")
+async def get_dsa_topics():
+    return {"topics": ALL_TOPIC_NAMES}
 
 @router.post("/courses", response_model=CourseRecommendationResponse)
 async def get_course_recommendations(request: CourseRecommendationRequest):

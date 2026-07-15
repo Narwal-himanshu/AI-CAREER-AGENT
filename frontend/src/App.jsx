@@ -20,7 +20,15 @@ import Courses from './pages/Courses'
 import Resume from './pages/Resume'
 import Profile from './pages/Profile'
 import Sidebar from './components/Sidebar'
+import { Menu, Loader2 } from 'lucide-react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { roadmapPathForSlug } from './lib/yearNav'
+
+// Where we stash the page a signed-out (or profile-less) visitor was trying to
+// reach, e.g. "/roadmap/3rd-year", so we can send them there automatically
+// once they finish login / onboarding / the quiz instead of dumping them on
+// the dashboard.
+const POST_AUTH_REDIRECT_KEY = 'postAuthRedirect'
 
 function App() {
   const navigate = useNavigate()
@@ -33,6 +41,37 @@ function App() {
   const [quizQuestions, setQuizQuestions] = useState([])
   const [quizAnalysis, setQuizAnalysis] = useState(null)
 
+  // authLoading: true until Firebase's first auth-state callback fires.
+  // profileLoading: true while we're fetching/creating the Firestore user doc
+  // for a signed-in user. Together these let protected routes (roadmap,
+  // dashboard, etc.) show a loader instead of bouncing a refreshed/deep-linked
+  // page to /onboarding before we actually know whether a profile exists.
+  const [authLoading, setAuthLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
+
+  // Sidebar collapse (desktop) / drawer (mobile) state. Collapsed preference
+  // is remembered across visits.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('sidebarCollapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('sidebarCollapsed', String(next))
+      } catch {
+        // ignore storage errors (e.g. private browsing)
+      }
+      return next
+    })
+  }
+
   // Listen for Firebase auth state changes
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -42,6 +81,7 @@ function App() {
         setAuthToken(token)
 
         // Create/refresh the Firestore user doc and update the login streak
+        setProfileLoading(true)
         try {
           const doc = await ensureUserAndRecordLogin(user.uid, user.email)
           setUserDoc(doc)
@@ -54,12 +94,15 @@ function App() {
           }
         } catch (err) {
           console.error('Failed to sync user profile:', err)
+        } finally {
+          setProfileLoading(false)
         }
       } else {
         setAuthUser(null)
         setAuthToken(null)
         setUserDoc(null)
       }
+      setAuthLoading(false)
     })
     return () => unsub()
   }, [])
@@ -73,22 +116,47 @@ function App() {
     }
   }
 
+  const peekPostAuthRedirect = () => {
+    try { return sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) } catch { return null }
+  }
+
+  const consumePostAuthRedirect = () => {
+    const path = peekPostAuthRedirect()
+    try { sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY) } catch { /* ignore storage errors */ }
+    return path
+  }
+
   // Handle successful Firebase auth — navigate based on mode
   const handleLoginSubmit = async (user) => {
     const token = await user.getIdToken()
     setAuthUser(user)
     setAuthToken(token)
+    let hasProfile = false
     try {
       const doc = await ensureUserAndRecordLogin(user.uid, user.email)
       setUserDoc(doc)
       if (doc?.quizProfilePayload && doc?.analysis) {
         setStudentProfile(doc.quizProfilePayload)
         setQuizAnalysis(doc.analysis)
+        hasProfile = true
       }
     } catch (err) {
       console.error('Failed to sync user profile:', err)
     }
-    navigate('/')
+
+    const redirect = peekPostAuthRedirect()
+    if (redirect && hasProfile) {
+      // Already has a completed profile — go straight to the page they wanted
+      // (e.g. a specific year's roadmap).
+      consumePostAuthRedirect()
+      navigate(redirect)
+    } else if (redirect) {
+      // No profile yet — keep the redirect stashed so it can be honored once
+      // onboarding + the quiz are done (see handleQuizComplete).
+      navigate('/onboarding')
+    } else {
+      navigate('/')
+    }
   }
 
   // Opportunities feed doesn't require profile setup - go straight to the page
@@ -111,6 +179,24 @@ function App() {
       chatbot: studentProfile ? '/dashboard' : '/onboarding'
     }
     navigate(routes[key] || '/onboarding')
+  }
+
+  // "By year" navigation (Navbar dropdown + Sidebar sub-menu both call this).
+  // Guards on auth/profile first so the request survives login + onboarding +
+  // the quiz and lands the user exactly where they meant to go.
+  const handleYearNav = (slug) => {
+    const path = roadmapPathForSlug(slug)
+    if (!authUser) {
+      try { sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, path) } catch { /* ignore storage errors */ }
+      navigate('/login')
+      return
+    }
+    if (!studentProfile) {
+      try { sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, path) } catch { /* ignore storage errors */ }
+      navigate('/onboarding')
+      return
+    }
+    navigate(path)
   }
 
   // Handle Log out
@@ -136,6 +222,10 @@ function App() {
     setQuizQuestions([])
     setQuizAnalysis(null)
     navigate('/onboarding')
+  }
+
+  const handleGoHome = () => {
+    navigate('/')
   }
 
   const handleGoToProfile = () => {
@@ -166,7 +256,8 @@ function App() {
   // Complete quiz assessment helper
   const handleQuizComplete = (analysis) => {
     setQuizAnalysis(analysis)
-    navigate('/dashboard')
+    const redirect = consumePostAuthRedirect()
+    navigate(redirect || '/dashboard')
   }
 
   // Hide sidebar during landing page, onboarding, login, and quiz taking
@@ -175,25 +266,70 @@ function App() {
   const readinessScore = computeReadinessScore(userDoc)
   const readinessLabel = computeReadinessLabel(userDoc)
 
+  // True while we still don't know for sure whether a signed-in user has a
+  // completed profile — prevents a flash-redirect to /onboarding on refresh
+  // or a deep link (e.g. /roadmap/3rd-year) while Firebase/Firestore are
+  // still resolving.
+  const bootingProfile = authLoading || (!!authUser && profileLoading)
+
+  // Shared guard for every route that needs a completed student profile.
+  // Centralizing this avoids repeating the loading/redirect ternary on each
+  // <Route> and keeps all profile-gated pages consistent.
+  const requireProfile = (element) => {
+    if (bootingProfile) {
+      return (
+        <div className="min-h-screen flex items-center justify-center text-slate">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      )
+    }
+    return studentProfile ? element : <Navigate to="/onboarding" replace />
+  }
+
   return (
     <div className="min-h-screen bg-paper text-ink flex">
       {showSidebar && (
         <Sidebar
           onRestart={handleRestartAssessment}
-          onGoHome={handleNavigateHome}
+          onGoHome={handleLogout}
           email={authUser?.email}
           displayName={authUser?.displayName}
           onGoToProfile={handleGoToProfile}
           onSignOut={handleLogout}
+          onYearNav={handleYearNav}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
         />
       )}
-      <main className="flex-1 transition-all duration-300 min-h-screen">
+      <main
+        className={`flex-1 min-h-screen w-full transition-all duration-300 ease-in-out ${
+          showSidebar ? (sidebarCollapsed ? 'md:ml-20' : 'md:ml-64') : ''
+        }`}
+      >
+        {/* Mobile top bar: only shown on small screens so the sidebar (an
+            overlay drawer below md) always has a way to be opened, and page
+            content never sits underneath it. */}
+        {showSidebar && (
+          <div className="md:hidden sticky top-0 z-20 flex items-center gap-3 border-b border-mist bg-paper/95 backdrop-blur px-4 py-3">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="p-2 -ml-2 text-ink hover:bg-mist rounded-lg transition-colors cursor-pointer"
+              aria-label="Open sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="font-display font-extrabold text-base text-ink">CareerAgent</span>
+          </div>
+        )}
         <Routes>
           <Route path="/" element={
             <Home
               onStartAssessment={handleLogin}
               onGoToOpportunities={handleGoToOpportunities}
               onFeatureNav={handleFeatureNav}
+              onYearNav={handleYearNav}
               authUser={authUser}
               onGoToProfile={handleGoToProfile}
               onSignOut={handleLogout}
@@ -208,7 +344,7 @@ function App() {
             <Onboarding
               key={userDoc ? 'ready' : 'loading'}
               onStartQuiz={handleStartQuiz}
-              onGoHome={handleNavigateHome}
+              onGoHome={handleLogout}
               authUser={authUser}
               userDoc={userDoc}
               onSaveProfile={handleSaveProfile}
@@ -219,25 +355,31 @@ function App() {
               profile={studentProfile}
               questions={quizQuestions}
               onComplete={handleQuizComplete}
-              onGoHome={handleNavigateHome}
+              onGoHome={handleLogout}
               onQuizFinished={handleQuizFinished}
             />
           } />
           <Route path="/dashboard" element={
-            studentProfile ? <Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleRestartAssessment} /> : <Navigate to="/onboarding" replace />
+            requireProfile(<Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleRestartAssessment} />)
           } />
           <Route path="/opportunities" element={<Opportunities profile={studentProfile} analysis={quizAnalysis} />} />
+          {/* Base roadmap (uses the student's own year) and the four "By Year"
+              deep links share the same Roadmap component — it reads :yearSlug
+              via useParams and reuses the identical fetch/render logic. */}
           <Route path="/roadmap" element={
-            studentProfile ? <Roadmap profile={studentProfile} analysis={quizAnalysis} /> : <Navigate to="/onboarding" replace />
+            requireProfile(<Roadmap profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)
+          } />
+          <Route path="/roadmap/:yearSlug" element={
+            requireProfile(<Roadmap profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)
           } />
           <Route path="/dsa" element={
-            studentProfile ? <DSA profile={studentProfile} analysis={quizAnalysis} /> : <Navigate to="/onboarding" replace />
+            requireProfile(<DSA profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)
           } />
           <Route path="/courses" element={
-            studentProfile ? <Courses profile={studentProfile} analysis={quizAnalysis} /> : <Navigate to="/onboarding" replace />
+            requireProfile(<Courses profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)
           } />
           <Route path="/resume" element={
-            studentProfile ? <Resume /> : <Navigate to="/onboarding" replace />
+            requireProfile(<Resume />)
           } />
           <Route path="/profile" element={
             authUser ? (

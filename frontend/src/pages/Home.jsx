@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { 
   Search, Menu, X, ArrowRight, CheckCircle2, ShieldCheck, 
   ExternalLink, Code2, Milestone, Bell, Sparkles, BookOpen,
-  Calendar, Flame, GraduationCap, HelpCircle
+  Calendar, Flame, GraduationCap, HelpCircle, ChevronDown
 } from 'lucide-react'
 import UserMenu from '../components/UserMenu'
+import YearDropdown from '../components/YearDropdown'
+import { YEAR_OPTIONS, isYearActive } from '../lib/yearNav'
 
 // Sub-component 1: Slim Announcement Bar
 function AnnouncementBar() {
@@ -17,9 +20,11 @@ function AnnouncementBar() {
 }
 
 // Sub-component 2: Sticky Navbar with Dropdowns/Mega-menus
-function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser, onGoToProfile, onSignOut }) {
+function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, onYearNav, authUser, onGoToProfile, onSignOut }) {
   const [activeMenu, setActiveMenu] = useState(null) // 'product' | 'year' | 'resources' | null
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileYearOpen, setMobileYearOpen] = useState(false)
+  const location = useLocation()
 
   const handleMenuToggle = (menu) => {
     setActiveMenu(activeMenu === menu ? null : menu)
@@ -57,7 +62,7 @@ function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser
             </button>
             
             {activeMenu === 'product' && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 w-[600px] bg-white border border-mist rounded-2xl shadow-xl p-6 grid grid-cols-5 gap-6">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 w-[600px] bg-white border border-mist rounded-2xl shadow-xl p-6 grid grid-cols-5 gap-6 dropdown-panel">
                 <div className="col-span-3 space-y-4">
                   <h4 className="text-xs font-bold text-slate uppercase tracking-wider">Features</h4>
                   <div className="grid grid-cols-2 gap-3">
@@ -101,31 +106,13 @@ function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser
             )}
           </div>
 
-          {/* By Year Dropdown */}
-          <div className="relative" onMouseEnter={() => setActiveMenu('year')} onMouseLeave={() => setActiveMenu(null)}>
-            <button className="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all">
-              By year <span className="text-[10px]">▼</span>
-            </button>
-            {activeMenu === 'year' && (
-              <div className="absolute top-full left-0 w-[240px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-2">
-                {[
-                  { yr: '1st Year', blurb: 'Explore domains & foundations' },
-                  { yr: '2nd Year', blurb: 'Master DSA & core theories' },
-                  { yr: '3rd Year', blurb: 'Build portfolios & projects' },
-                  { yr: '4th Year', blurb: 'Placements in months, not years' }
-                ].map((item, i) => (
-                  <button 
-                    key={i} 
-                    onClick={onStartAssessment}
-                    className="w-full text-left p-2.5 rounded-xl hover:bg-mist transition-all cursor-pointer"
-                  >
-                    <div className="text-xs font-bold text-ink">{item.yr}</div>
-                    <div className="text-[10px] text-slate mt-0.5 leading-normal">{item.blurb}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* By Year Dropdown — fully functional navigation to /roadmap/:year */}
+          <YearDropdown
+            pathname={location.pathname}
+            onSelectYear={onYearNav}
+            buttonClassName="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all cursor-pointer"
+            panelClassName="absolute top-full left-0 w-[240px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-2 z-50"
+          />
 
           {/* Resources Dropdown */}
           <div className="relative" onMouseEnter={() => setActiveMenu('resources')} onMouseLeave={() => setActiveMenu(null)}>
@@ -133,7 +120,7 @@ function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser
               Resources <span className="text-[10px]">▼</span>
             </button>
             {activeMenu === 'resources' && (
-              <div className="absolute top-full left-0 w-[220px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-1">
+              <div className="absolute top-full left-0 w-[220px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-1 dropdown-panel">
                 {['PYQs & Notes', 'Industry Trends', 'Blog', 'Guides'].map((res, i) => (
                   <button 
                     key={i} 
@@ -186,7 +173,7 @@ function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-paper border-b border-mist px-6 py-4 space-y-4">
+        <div className="md:hidden bg-paper border-b border-mist px-6 py-4 space-y-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="space-y-1">
             <div className="font-bold text-xs text-slate uppercase px-2 mb-1">Product</div>
             {['Skill assessment', 'Career roadmap', 'DSA practice', 'Opportunities feed', 'AI chatbot'].map((item) => (
@@ -199,6 +186,41 @@ function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, authUser
               </button>
             ))}
           </div>
+
+          {/* By Year — collapsible, touch-friendly, closes drawer after selecting */}
+          <div className="border-t border-mist pt-3">
+            <button
+              type="button"
+              onClick={() => setMobileYearOpen((v) => !v)}
+              aria-expanded={mobileYearOpen}
+              aria-controls="mobile-year-menu"
+              className="w-full flex items-center justify-between font-bold text-xs text-slate uppercase px-2 mb-1 py-1"
+            >
+              By year
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${mobileYearOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {mobileYearOpen && (
+              <div id="mobile-year-menu" className="space-y-1 submenu-panel">
+                {YEAR_OPTIONS.map((item) => {
+                  const active = isYearActive(location.pathname, item.slug)
+                  return (
+                    <button
+                      key={item.slug}
+                      onClick={() => { setMobileMenuOpen(false); setMobileYearOpen(false); onYearNav(item.slug); }}
+                      aria-current={active ? 'page' : undefined}
+                      className={`w-full text-left py-2 px-2 text-sm font-medium rounded-lg transition-colors ${
+                        active ? 'bg-signal-tint text-signal font-bold' : 'text-ink hover:bg-mist'
+                      }`}
+                    >
+                      {item.label}
+                      <span className="block text-[11px] text-slate font-normal mt-0.5">{item.blurb}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
           <button 
             onClick={() => { setMobileMenuOpen(false); onStartAssessment(); }}
             className="w-full py-3 bg-signal hover:bg-signal/90 text-sm font-bold text-white rounded-full flex items-center justify-center gap-2"
@@ -820,6 +842,7 @@ function Home({
   onStartAssessment,
   onGoToOpportunities,
   onFeatureNav,
+  onYearNav,
   authUser,
   onGoToProfile,
   onSignOut,
@@ -833,6 +856,7 @@ function Home({
         onStartAssessment={onStartAssessment}
         onGoToOpportunities={onGoToOpportunities}
         onFeatureNav={onFeatureNav}
+        onYearNav={onYearNav}
         authUser={authUser}
         onGoToProfile={onGoToProfile}
         onSignOut={onSignOut}

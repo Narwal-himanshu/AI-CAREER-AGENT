@@ -1,82 +1,201 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Award, RefreshCw, GraduationCap, Milestone, Code2, BookOpen, FileText } from 'lucide-react'
+import {
+  LayoutDashboard, Award, RefreshCw, GraduationCap, Milestone, Code2, BookOpen, FileText,
+  PanelLeftClose, PanelLeftOpen, X, ChevronDown
+} from 'lucide-react'
 import UserMenu from './UserMenu'
+import { YEAR_OPTIONS, isYearActive, isRoadmapSection, roadmapPathForSlug } from '../lib/yearNav'
 
-function Sidebar({ onRestart, onGoHome, email, displayName, onGoToProfile, onSignOut }) {
+// Shared sidebar widths so App.jsx can offset the main content by the same amount.
+export const SIDEBAR_WIDTH_EXPANDED = 'w-64'
+export const SIDEBAR_WIDTH_COLLAPSED = 'w-20'
+
+function Sidebar({
+  onRestart, onGoHome, email, displayName, onGoToProfile, onSignOut, onYearNav,
+  collapsed = false, onToggleCollapse, mobileOpen = false, onCloseMobile,
+}) {
   const navigate = useNavigate()
   const location = useLocation()
 
+  // Keep the "By Year" submenu expanded whenever the user is anywhere under
+  // /roadmap, and collapsed elsewhere by default. This is the same
+  // `location.pathname` the Navbar dropdown reads, so the two never disagree
+  // about which year (if any) is currently active.
+  const [yearMenuOpen, setYearMenuOpen] = useState(() => isRoadmapSection(location.pathname))
+
+  useEffect(() => {
+    if (isRoadmapSection(location.pathname)) setYearMenuOpen(true)
+  }, [location.pathname])
+
   const menuItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'roadmap', name: 'Career Roadmap', icon: Milestone },
+    { id: 'roadmap', name: 'Career Roadmap', icon: Milestone, expandable: true },
     { id: 'dsa', name: 'DSA Practice', icon: Code2 },
     { id: 'courses', name: 'Courses', icon: BookOpen },
     { id: 'opportunities', name: 'Opportunities', icon: Award },
     { id: 'resume', name: 'Resume Builder', icon: FileText },
   ]
 
+  const handleNavigate = (id) => {
+    navigate(`/${id}`)
+    onCloseMobile?.()
+  }
+
+  const handleYearSelect = (slug) => {
+    onYearNav ? onYearNav(slug) : navigate(roadmapPathForSlug(slug))
+    onCloseMobile?.()
+  }
+
+  const widthClass = collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 border-r border-mist bg-paper md:block">
-      <div className="flex h-full flex-col justify-between p-6">
-        <div>
-          <div className="flex items-center justify-between gap-2 px-2 py-4">
-            <div onClick={onGoHome} className="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity">
-              <GraduationCap className="h-7 w-7 text-signal" />
-              <span className="font-display font-extrabold text-xl text-ink tracking-tight">
-                CareerAgent
-              </span>
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-ink/40 md:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 ${widthClass} border-r border-mist bg-paper
+          transition-all duration-300 ease-in-out
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+      >
+        <div className="flex h-full flex-col justify-between p-4 md:p-6">
+          <div>
+            <div className={`flex items-center gap-2 py-4 ${collapsed ? 'justify-center px-0' : 'justify-between px-2'}`}>
+              <div
+                onClick={() => { onGoHome(); onCloseMobile?.() }}
+                className={`flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity ${collapsed ? 'justify-center' : ''}`}
+              >
+                <GraduationCap className="h-7 w-7 text-signal flex-shrink-0" />
+                {!collapsed && (
+                  <span className="font-display font-extrabold text-xl text-ink tracking-tight whitespace-nowrap">
+                    CareerAgent
+                  </span>
+                )}
+              </div>
+
+              {/* Close button on mobile drawer */}
+              <button
+                onClick={onCloseMobile}
+                className="md:hidden p-1 text-slate hover:text-ink cursor-pointer"
+                aria-label="Close sidebar"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
+
+            {/* Desktop collapse/expand toggle */}
+            <button
+              onClick={onToggleCollapse}
+              className={`hidden md:flex items-center gap-2 w-full px-2 py-2 mb-2 rounded-lg text-slate hover:bg-mist hover:text-ink transition-all cursor-pointer ${collapsed ? 'justify-center' : 'justify-start'}`}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <PanelLeftOpen className="h-4.5 w-4.5" /> : <PanelLeftClose className="h-4.5 w-4.5" />}
+              {!collapsed && <span className="text-[10px] font-bold uppercase tracking-wider">Hide</span>}
+            </button>
+
+            {email && (
+              <div className={`pb-4 ${collapsed ? 'flex justify-center px-0' : 'px-2'}`}>
+                <UserMenu
+                  email={email}
+                  displayName={displayName}
+                  onGoToProfile={onGoToProfile}
+                  onSignOut={onSignOut}
+                  align="left"
+                />
+              </div>
+            )}
+
+            <nav className="mt-2 space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon
+                const isActive = item.id === 'roadmap'
+                  ? isRoadmapSection(location.pathname)
+                  : location.pathname === `/${item.id}`
+                const isYearExpandable = item.expandable && !collapsed
+
+                return (
+                  <div key={item.id}>
+                    <div
+                      className={`flex w-full items-center rounded-xl transition-all duration-250 ${
+                        isActive ? 'bg-signal-tint border border-signal/10' : ''
+                      }`}
+                    >
+                      <button
+                        onClick={() => handleNavigate(item.id)}
+                        title={collapsed ? item.name : undefined}
+                        className={`flex flex-1 items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all duration-250 cursor-pointer ${
+                          collapsed ? 'justify-center px-0' : ''
+                        } ${
+                          isActive ? 'text-signal font-extrabold' : 'text-slate hover:bg-mist hover:text-ink'
+                        }`}
+                      >
+                        <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-signal' : 'text-slate'}`} />
+                        {!collapsed && <span className="whitespace-nowrap">{item.name}</span>}
+                      </button>
+
+                      {isYearExpandable && (
+                        <button
+                          onClick={() => setYearMenuOpen((v) => !v)}
+                          aria-expanded={yearMenuOpen}
+                          aria-controls="sidebar-year-submenu"
+                          aria-label={yearMenuOpen ? 'Collapse by-year list' : 'Expand by-year list'}
+                          className={`p-3 pr-4 rounded-xl cursor-pointer transition-colors ${isActive ? 'text-signal' : 'text-slate hover:text-ink'}`}
+                        >
+                          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${yearMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+
+                    {isYearExpandable && yearMenuOpen && (
+                      <div id="sidebar-year-submenu" className="mt-1 ml-4 pl-3 border-l border-mist space-y-0.5 submenu-panel">
+                        {YEAR_OPTIONS.map((year) => {
+                          const active = isYearActive(location.pathname, year.slug)
+                          return (
+                            <button
+                              key={year.slug}
+                              onClick={() => handleYearSelect(year.slug)}
+                              aria-current={active ? 'page' : undefined}
+                              className={`flex w-full items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                active ? 'bg-signal-tint text-signal' : 'text-slate hover:bg-mist hover:text-ink'
+                              }`}
+                            >
+                              {year.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </nav>
           </div>
 
-          {email && (
-            <div className="px-2 pb-4">
-              <UserMenu
-                email={email}
-                displayName={displayName}
-                onGoToProfile={onGoToProfile}
-                onSignOut={onSignOut}
-                align="left"
-              />
-            </div>
-          )}
-
-          <nav className="mt-2 space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = location.pathname === `/${item.id}`
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigate(`/${item.id}`)}
-                  className={`flex w-full items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all duration-250 ${
-                    isActive
-                      ? 'bg-signal-tint border border-signal/10 text-signal font-extrabold'
-                      : 'text-slate hover:bg-mist hover:text-ink'
-                  }`}
-                >
-                  <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-signal' : 'text-slate'}`} />
-                  {item.name}
-                </button>
-              )
-            })}
-          </nav>
-        </div>
-
-        <div className="border-t border-mist pt-6">
-          <button
-            onClick={onRestart}
-            className="flex w-full items-center justify-center gap-2 px-4 py-3 rounded-full border border-signal text-signal hover:bg-signal-tint text-xs font-bold transition-all cursor-pointer"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Restart Assessment
-          </button>
-          <div className="mt-4 text-center text-[10px] text-slate font-medium">
-            AI Career Agent v1.0
+          <div className="border-t border-mist pt-6">
+            <button
+              onClick={onRestart}
+              title={collapsed ? 'Restart Assessment' : undefined}
+              className={`flex w-full items-center justify-center gap-2 px-4 py-3 rounded-full border border-signal text-signal hover:bg-signal-tint text-xs font-bold transition-all cursor-pointer ${collapsed ? 'px-0' : ''}`}
+            >
+              <RefreshCw className="h-3.5 w-3.5 flex-shrink-0" />
+              {!collapsed && 'Restart Assessment'}
+            </button>
+            {!collapsed && (
+              <div className="mt-4 text-center text-[10px] text-slate font-medium">
+                AI Career Agent v1.0
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   )
 }
 

@@ -1,128 +1,341 @@
-import React, { useState } from 'react'
-import { Milestone, CheckCircle2, Circle, Target, Calendar, BookOpen, Briefcase, GraduationCap, ArrowRight } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useParams, useNavigate, Navigate } from 'react-router-dom'
+import { Milestone, Calendar, ArrowRight, AlertCircle, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { YEAR_OPTIONS, YEAR_SLUGS, getYearBySlug, roadmapPathForSlug, ROADMAP_BASE_PATH } from '../lib/yearNav'
 
-const ROADMAPS = {
-  Placement: {
-    'DSA/CP': [
-      { sem: 'Current Sem', tasks: ['Build fundamentals: Arrays, Strings, Linked Lists, Recursion', 'Solve 50 easy problems on LeetCode', 'Learn time & space complexity analysis', 'Practice sorting & searching algorithms'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Master Trees, Graphs, Dynamic Programming', 'Solve 100 medium problems on LeetCode', 'Participate in weekly contests', 'Start CS Fundamentals: OS, DBMS, Networks'], icon: Target },
-      { sem: 'Prep Sem', tasks: ['System Design basics for interviews', 'Solve company-specific previous year questions', 'Build 2 full-stack projects for resume', 'Aptitude & verbal preparation'], icon: Briefcase },
-      { sem: 'Placement Season', tasks: ['Revise all core topics from notes', 'Give mock interviews weekly', 'Apply through campus placements & off-campus', 'Negotiate offers and finalise'], icon: GraduationCap },
-    ],
-    'Web Development': [
-      { sem: 'Current Sem', tasks: ['HTML/CSS/JavaScript fundamentals', 'Build 3 static websites', 'Learn Git & GitHub', 'Understand DOM manipulation & Fetch API'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Learn React.js or Next.js', 'Build a full-stack app with Node.js + DB', 'Deploy on Vercel/Render', 'Contribute to open-source'], icon: Target },
-      { sem: 'Prep Sem', tasks: ['System Design for frontend & backend', 'Build a portfolio with 2-3 live projects', 'Practice DSA (medium level)', 'Start applying for internships'], icon: Briefcase },
-      { sem: 'Placement Season', tasks: ['Revise CS fundamentals & projects', 'Give mock interviews', 'Apply through campus & off-campus drives', 'Finalise offer'], icon: GraduationCap },
-    ],
-    'AI/ML': [
-      { sem: 'Current Sem', tasks: ['Linear Algebra & Statistics review', 'Learn Python for ML (NumPy, Pandas, Matplotlib)', 'Complete Kaggle beginner courses', 'Build first regression model'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Supervised & Unsupervised learning algorithms', 'Learn Scikit-learn, TensorFlow basics', 'Do 2 Kaggle competitions', 'Build an end-to-end ML project'], icon: Target },
-      { sem: 'Prep Sem', tasks: ['Deep Learning with CNNs, RNNs, Transformers', 'Learn deployment: Flask/FastAPI, Docker', 'Read 10 ML research papers', 'Build portfolio with 3 projects'], icon: Briefcase },
-      { sem: 'Placement Season', tasks: ['Revise ML theory & project details', 'Mock interviews for ML roles', 'Apply for AI/ML roles', 'Finalise offer'], icon: GraduationCap },
-    ],
-    CyberSec: [
-      { sem: 'Current Sem', tasks: ['Computer Networks & OS fundamentals', 'Learn Linux command line & scripting', 'Set up a home lab with VirtualBox', 'Understand OWASP Top 10'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Web security: XSS, SQLi, CSRF', 'Learn network scanning with Nmap & Wireshark', 'Practice on TryHackMe/HackTheBox', 'Start cryptography basics'], icon: Target },
-      { sem: 'Prep Sem', tasks: ['Binary exploitation & reverse engineering', 'Get certifications: CEH or CompTIA Security+', 'Write security research blog posts', 'Build a security tool project'], icon: Briefcase },
-      { sem: 'Placement Season', tasks: ['Revise security concepts & tools', 'Practice interview questions', 'Apply for security analyst/engineer roles', 'Finalise offer'], icon: GraduationCap },
-    ],
-  },
-  GATE: {
-    default: [
-      { sem: 'Current Sem', tasks: ['Complete GATE syllabus for Mathematics', 'Study Aptitude & Verbal Ability', 'Start core subjects: DS, Algorithms, CO, OS', 'Solve previous year GATE papers'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Complete remaining core subjects', 'Solve topic-wise question banks', 'Join test series for mock tests', 'Revise weak topics identified'], icon: Target },
-      { sem: 'Revision', tasks: ['Full-length mock tests every weekend', 'Analyze mistakes & improve speed', 'Revise all formulas & key concepts', 'Focus on time management'], icon: Briefcase },
-      { sem: 'Exam Season', tasks: ['Give GATE exam', 'Apply for PSUs accepting GATE scores', 'Prepare for interviews (if shortlisted)', 'Plan for M.Tech or direct jobs'], icon: GraduationCap },
-    ],
-  },
-  Startup: {
-    default: [
-      { sem: 'Current Sem', tasks: ['Identify problem statement through user research', 'Build MVP with no-code/low-code tools', 'Talk to 20 potential users', 'Validate problem-solution fit'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Build actual product with tech stack', 'Implement basic analytics & feedback loop', 'Launch beta to closed user group', 'Iterate based on feedback'], icon: Target },
-      { sem: 'Growth', tasks: ['Acquire first 100 users', 'Set up basic business ops & team', 'Apply for incubator/accelerator programs', 'Refine pitch deck'], icon: Briefcase },
-      { sem: 'Scale', tasks: ['Apply for funding (angel/seed)', 'Scale product & team', 'Focus on unit economics', 'Plan for full launch'], icon: GraduationCap },
-    ],
-  },
-  Research: {
-    default: [
-      { sem: 'Current Sem', tasks: ['Identify research area of interest', 'Read 10 papers in that domain', 'Learn LaTeX for academic writing', 'Set up Google Scholar profile'], icon: BookOpen },
-      { sem: 'Next Sem', tasks: ['Narrow down to specific problem', 'Implement baseline for chosen problem', 'Run first experiments & log results', 'Write a survey paper'], icon: Target },
-      { sem: 'Advanced', tasks: ['Propose novel method/improvement', 'Write full research paper', 'Submit to conference (Springer/ACM/IEEE)', 'Apply for research internships'], icon: Briefcase },
-      { sem: 'Publish', tasks: ['Address reviewer comments & resubmit', 'Apply for PhD programs or research roles', 'Present at conferences', 'Build academic network'], icon: GraduationCap },
-    ],
-  },
+const DOMAIN_MAP = {
+  'DSA/CP': 'DSA/CP', 'Web Development': 'Web Dev', 'AI/ML': 'AI/ML',
+  'Cloud': 'Cloud', 'CyberSec': 'CyberSec', 'Mobile': 'Mobile',
 }
 
-const DOMAIN_KEYS = {
-  'DSA/CP': 'DSA/CP',
-  'Web Development': 'Web Development',
-  'AI/ML': 'AI/ML',
-  'Cloud': 'DSA/CP',
-  'CyberSec': 'CyberSec',
-  'Mobile': 'Web Development',
+function RoadmapSkeleton() {
+  return (
+    <div className="min-h-screen bg-mist p-6 md:p-8 font-sans text-ink">
+      <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+        <div className="theme-card bg-paper p-6 border border-gray-200/60 shadow-sm space-y-3">
+          <div className="h-6 w-56 bg-mist rounded" />
+          <div className="h-3 w-full bg-mist rounded" />
+        </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="theme-card bg-paper p-5 border border-gray-200/60 shadow-sm space-y-2">
+            <div className="h-4 w-24 bg-mist rounded" />
+            <div className="h-3 w-full bg-mist rounded" />
+            <div className="h-3 w-2/3 bg-mist rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
-function Roadmap({ profile, analysis }) {
-  const careerGoal = profile?.career_goal || 'Placement'
-  const domain = profile?.domain_interest?.[0] || 'DSA/CP'
-  const studentYear = profile?.profile?.year || 2
-  const skillLevel = analysis?.skill_profile?.level || 'Not assessed'
-  const weakAreas = analysis?.skill_profile?.weak_areas || []
+// The "By Year" tab strip shown at the top of the roadmap page. Reuses the
+// same YEAR_OPTIONS as the Navbar dropdown and Sidebar submenu so all three
+// surfaces are always in sync — the URL is the single source of truth for
+// which tab is highlighted.
+function YearTabs({ activeSlug }) {
+  const navigate = useNavigate()
+  return (
+    <div
+      role="tablist"
+      aria-label="Browse roadmap by year"
+      className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1"
+    >
+      <button
+        role="tab"
+        aria-selected={!activeSlug}
+        onClick={() => navigate(ROADMAP_BASE_PATH)}
+        className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+          !activeSlug ? 'bg-signal text-white shadow-sm' : 'bg-paper text-slate border border-mist hover:text-ink hover:border-signal/30'
+        }`}
+      >
+        All Years
+      </button>
+      {YEAR_OPTIONS.map((y) => {
+        const active = activeSlug === y.slug
+        return (
+          <button
+            key={y.slug}
+            role="tab"
+            aria-selected={active}
+            onClick={() => navigate(roadmapPathForSlug(y.slug))}
+            className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              active ? 'bg-signal text-white shadow-sm' : 'bg-paper text-slate border border-mist hover:text-ink hover:border-signal/30'
+            }`}
+          >
+            {y.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
-  const roadmapKey = DOMAIN_KEYS[domain] || 'DSA/CP'
-  const goalRoadmaps = ROADMAPS[careerGoal]
-  const plan = goalRoadmaps?.[roadmapKey] || goalRoadmaps?.default || ROADMAPS.Placement['DSA/CP']
+// A single year's plan card. Extracted so the "focused year" view and the
+// "full cascading plan" view render identical markup instead of duplicating
+// this ~80-line block.
+function YearPlanCard({ year }) {
+  return (
+    <div className="theme-card bg-paper p-5 border border-gray-200/60 shadow-sm">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-xs font-bold text-signal uppercase tracking-wider">Year {year.year}</span>
+        <span className="text-xs font-bold text-slate">— {year.theme}</span>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        <div>
+          <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Focus Areas</span>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {year.focus_areas.map((f, i) => (
+              <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded bg-signal-tint text-signal border border-signal/10">{f}</span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Monthly Goals</span>
+          <ul className="mt-1 space-y-1">
+            {year.monthly_goals.map((g, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-slate">
+                <ArrowRight className="h-3 w-3 text-signal mt-0.5 flex-shrink-0" />
+                <span>{g}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Skills to Learn</span>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {year.skills_to_learn.map((s, i) => (
+                <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded bg-mist text-slate border border-mist">{s}</span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-slate uppercase tracking-wider">DSA Target</span>
+            <p className="text-xs text-slate mt-1">{year.dsa_target}</p>
+          </div>
+        </div>
+
+        {year.projects_to_build.length > 0 && (
+          <div>
+            <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Projects</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+              {year.projects_to_build.map((p, i) => (
+                <div key={i} className="p-2.5 rounded-lg bg-mist border border-mist">
+                  <span className="text-xs font-bold text-ink">{p.title}</span>
+                  <p className="text-[10px] text-slate mt-0.5">{p.description}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {p.tech_stack.map((t, j) => (
+                      <span key={j} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-paper text-slate">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {year.resources.length > 0 && (
+          <div>
+            <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Resources</span>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {year.resources.map((r, i) => (
+                <a key={i} href={r.url} target="_blank" rel="noreferrer"
+                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-paper border border-signal/20 text-signal hover:bg-signal-tint transition-colors">
+                  {r.name} ({r.type})
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-mist">
+        <span className="text-[10px] font-bold text-signal">Milestone: </span>
+        <span className="text-xs text-slate">{year.milestone}</span>
+        {year.internship_target && (
+          <span className="ml-4 text-[10px] font-bold text-amber-600">Internship target: {year.internship_target}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Vertical timeline wrapper reused for both the multi-year cascade and the
+// "what's next" section on a focused single-year page.
+function YearTimeline({ years }) {
+  return (
+    <div className="relative">
+      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-signal/20" />
+      {years.map((year, idx) => (
+        <div key={idx} className="relative pl-16 pb-8 last:pb-0">
+          <div className="absolute left-4 top-1 w-9 h-9 rounded-full bg-signal-tint border-2 border-signal flex items-center justify-center">
+            <Calendar className="h-4 w-4 text-signal" />
+          </div>
+          <YearPlanCard year={year} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Roadmap({ profile, analysis, authToken }) {
+  const { yearSlug } = useParams()
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [showUpcoming, setShowUpcoming] = useState(false)
+
+  // Invalid deep link like /roadmap/9th-year — bounce back to the full plan
+  // instead of erroring out.
+  const yearIsInvalid = yearSlug && !YEAR_SLUGS.includes(yearSlug)
+  const selectedYear = yearSlug ? getYearBySlug(yearSlug) : null
+
+  const fetchRoadmap = useCallback(async () => {
+    if (!profile || yearIsInvalid) return
+    setLoading(true)
+    setError(null)
+    try {
+      const payload = {
+        name: profile?.profile?.name || 'Student',
+        // A "By Year" deep link overrides the student's own current year so
+        // /roadmap/1st-year always shows year 1 onward, regardless of which
+        // year the student is actually in.
+        year: selectedYear ? selectedYear.num : (profile?.profile?.year || 2),
+        domain: DOMAIN_MAP[profile?.domain_interest?.[0]] || 'DSA/CP',
+        career_goal: profile?.career_goal || 'Placement',
+        level: analysis?.skill_profile?.level || 'Beginner',
+        hours_per_day: profile?.time_and_style?.hours_per_day || 2,
+        college_tier: profile?.profile?.college_tier || 'Tier-2',
+      }
+      const headers = { 'Content-Type': 'application/json' }
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`
+      const res = await fetch('http://localhost:8000/api/agents/career-roadmap', {
+        method: 'POST', headers, body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error('Failed to generate roadmap')
+      setData(await res.json())
+    } catch (err) {
+      setError(err.message || 'Something went wrong while talking to the server.')
+    } finally {
+      setLoading(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, analysis, authToken, yearSlug])
+
+  useEffect(() => {
+    setShowUpcoming(false)
+    fetchRoadmap()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, analysis, yearSlug])
+
+  if (yearIsInvalid) return <Navigate to={ROADMAP_BASE_PATH} replace />
+
+  if (loading) return <RoadmapSkeleton />
+
+  if (error) return (
+    <div className="min-h-screen bg-mist p-6 md:p-8 font-sans text-ink">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <YearTabs activeSlug={yearSlug} />
+        <div className="theme-card bg-paper p-8 border border-red-200 shadow-sm text-center">
+          <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
+          <h2 className="text-lg font-display font-bold text-ink mb-1">Failed to generate roadmap</h2>
+          <p className="text-sm text-slate mb-4">{error}</p>
+          <p className="text-xs text-slate mb-5">Make sure the backend server is running on port 8000 and the Gemini API key is set.</p>
+          <button
+            onClick={fetchRoadmap}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-signal text-white text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (!data) return null
+
+  if (!data.plan || data.plan.length === 0) return (
+    <div className="min-h-screen bg-mist p-6 md:p-8 font-sans text-ink">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <YearTabs activeSlug={yearSlug} />
+        <div className="theme-card bg-paper p-10 border border-gray-200/60 shadow-sm text-center">
+          <Milestone className="h-8 w-8 text-slate mx-auto mb-3" />
+          <h3 className="text-sm font-display font-bold text-ink mb-1">No roadmap yet</h3>
+          <p className="text-xs text-slate mb-4">We couldn't generate a roadmap. Try retrying below.</p>
+          <button
+            onClick={fetchRoadmap}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-signal text-white text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  // Focused single-year view: show that year's card up top, with the rest of
+  // the generated plan (if any years follow it) tucked into a collapsible
+  // "What's next" section.
+  const focusedYear = selectedYear ? data.plan.find((y) => y.year === selectedYear.num) : null
+  const upcomingYears = selectedYear && focusedYear
+    ? data.plan.filter((y) => y.year !== selectedYear.num)
+    : []
 
   return (
     <div className="min-h-screen bg-mist p-6 md:p-8 font-sans text-ink">
       <div className="max-w-4xl mx-auto space-y-6">
+        <YearTabs activeSlug={yearSlug} />
+
         <div className="theme-card bg-paper p-6 border border-gray-200/60 shadow-sm">
           <div className="flex items-center gap-3 mb-1">
             <Milestone className="h-6 w-6 text-signal" />
             <div>
-              <h1 className="text-xl font-display font-extrabold text-ink">Career Roadmap</h1>
-              <p className="text-xs text-slate mt-0.5">Personalised for {domain} · {careerGoal} · Year {studentYear}</p>
+              <h1 className="text-xl font-display font-extrabold text-ink">
+                {selectedYear ? `${selectedYear.label} Roadmap` : 'Career Roadmap'}
+              </h1>
+              <p className="text-xs text-slate mt-0.5">for {data.student_name} · {data.domain} · {data.career_goal}</p>
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-mist">
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-signal-tint text-signal border border-signal/10">Level: {skillLevel}</span>
-            {weakAreas.length > 0 && (
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200">Weak areas: {weakAreas.join(', ')}</span>
-            )}
-          </div>
+          <p className="mt-4 text-xs text-slate bg-mist p-3 rounded-xl border border-mist leading-relaxed">{data.quick_start}</p>
         </div>
 
-        <div className="relative">
-          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-signal/20" />
+        {selectedYear && focusedYear ? (
+          <>
+            <YearPlanCard year={focusedYear} />
 
-          {plan.map((phase, idx) => {
-            const Icon = phase.icon
-            return (
-              <div key={idx} className="relative pl-16 pb-8 last:pb-0">
-                <div className="absolute left-4 top-1 w-9 h-9 rounded-full bg-signal-tint border-2 border-signal flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-signal" />
-                </div>
-
-                <div className="theme-card bg-paper p-5 border border-gray-200/60 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calendar className="h-3.5 w-3.5 text-signal" />
-                    <span className="text-xs font-bold text-signal uppercase tracking-wider">{phase.sem}</span>
+            {upcomingYears.length > 0 && (
+              <div className="theme-card bg-paper border border-gray-200/60 shadow-sm overflow-hidden">
+                <button
+                  onClick={() => setShowUpcoming((v) => !v)}
+                  aria-expanded={showUpcoming}
+                  aria-controls="upcoming-years"
+                  className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer"
+                >
+                  <span className="text-xs font-bold text-ink">
+                    What's next — Year{upcomingYears.length > 1 ? 's' : ''} {upcomingYears.map((y) => y.year).join(', ')}
+                  </span>
+                  {showUpcoming ? <ChevronUp className="h-4 w-4 text-slate" /> : <ChevronDown className="h-4 w-4 text-slate" />}
+                </button>
+                {showUpcoming && (
+                  <div id="upcoming-years" className="px-5 pb-5 submenu-panel">
+                    <YearTimeline years={upcomingYears} />
                   </div>
-                  <ul className="space-y-2">
-                    {phase.tasks.map((task, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-xs text-slate">
-                        <ArrowRight className="h-3.5 w-3.5 text-signal mt-0.5 flex-shrink-0" />
-                        <span>{task}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                )}
               </div>
-            )
-          })}
-        </div>
+            )}
+          </>
+        ) : selectedYear && !focusedYear ? (
+          <div className="theme-card bg-paper p-8 border border-gray-200/60 shadow-sm text-center">
+            <Milestone className="h-8 w-8 text-slate mx-auto mb-3" />
+            <h3 className="text-sm font-display font-bold text-ink mb-1">No plan data for {selectedYear.label}</h3>
+            <p className="text-xs text-slate">Try selecting a different year above, or view the full plan.</p>
+          </div>
+        ) : (
+          <YearTimeline years={data.plan} />
+        )}
       </div>
     </div>
   )

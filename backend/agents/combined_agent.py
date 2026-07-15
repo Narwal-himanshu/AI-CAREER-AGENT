@@ -186,13 +186,17 @@ Please generate the questions in a JSON object containing a 'questions' array.
 
         # Helper category classifier
         dsa_topics = {
-            "arrays", "strings", "sorting", "searching", "recursion", "linked lists",
-            "stacks/queues", "stacks", "queues", "trees", "graphs", "dynamic programming",
-            "greedy", "hashing", "heaps", "dsa", "recursion fundamentals", "linked list", "recursion/backtracking"
+            "arrays", "strings", "hash table", "hashing", "linked lists", "linked list",
+            "stacks/queues", "stacks", "queues", "trees", "binary search trees", "bst",
+            "graphs", "dynamic programming", "dp", "greedy", "heaps", "heap",
+            "sorting", "searching", "two pointers", "sliding window", "binary search",
+            "recursion", "recursion fundamentals", "recursion/backtracking", "backtracking",
+            "bit manipulation", "tries", "trie", "union find", "math", "number theory",
+            "dsa",
         }
         programming_topics = {
             "oop", "python", "java", "c++", "programming", "time/space complexity",
-            "bit manipulation", "oop concepts", "oop basics", "complexity analysis"
+            "oop concepts", "oop basics", "complexity analysis"
         }
         logic_topics = {
             "logic", "mathematical reasoning", "pattern recognition", "sequence puzzles", "logical reasoning"

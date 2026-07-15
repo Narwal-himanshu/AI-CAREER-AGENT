@@ -53,6 +53,7 @@ class DSAPracticeRequest(BaseModel):
     level: Literal["Beginner", "Intermediate", "Advanced"]
     domain: str
     topic: str = "all"
+    topics: List[str] = Field(default_factory=lambda: ["all"])
 
 class Problem(BaseModel):
     order: int
