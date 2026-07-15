@@ -19,6 +19,7 @@ import DSA from './pages/DSA'
 import Courses from './pages/Courses'
 import Resume from './pages/Resume'
 import Profile from './pages/Profile'
+import About from './pages/About'
 import Sidebar from './components/Sidebar'
 import { Menu, Loader2 } from 'lucide-react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
@@ -261,7 +262,7 @@ function App() {
   }
 
   // Hide sidebar during landing page, onboarding, login, and quiz taking
-  const showSidebar = !['/', '/login', '/onboarding', '/quiz'].includes(location.pathname)
+  const showSidebar = !['/', '/about', '/login', '/onboarding', '/quiz'].includes(location.pathname)
 
   const readinessScore = computeReadinessScore(userDoc)
   const readinessLabel = computeReadinessLabel(userDoc)
@@ -335,6 +336,17 @@ function App() {
               onSignOut={handleLogout}
               readinessScore={readinessScore}
               readinessLabel={readinessLabel}
+            />
+          } />
+          <Route path="/about" element={
+            <About
+              onStartAssessment={handleLogin}
+              onGoToOpportunities={handleGoToOpportunities}
+              onFeatureNav={handleFeatureNav}
+              onYearNav={handleYearNav}
+              authUser={authUser}
+              onGoToProfile={handleGoToProfile}
+              onSignOut={handleLogout}
             />
           } />
           <Route path="/login" element={
