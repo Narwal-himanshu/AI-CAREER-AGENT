@@ -32,22 +32,31 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
       {/* Background Decorative Shapes */}
       <div className="hidden md:flex absolute inset-0 pointer-events-none overflow-hidden max-w-[1400px] mx-auto">
         {/* Left shapes */}
-        <div className="absolute top-16 left-12 w-16 h-16 rounded-full bg-signal/10 backdrop-blur-2xl flex items-center justify-center shape-float">
-          <Code2 className="w-8 h-8 text-signal opacity-50" />
+        <div className="absolute top-16 left-12 w-16 h-16 rounded-full bg-signal/15 backdrop-blur-2xl flex items-center justify-center shape-float">
+          <Code2 className="w-7 h-7 text-signal/60" />
         </div>
-        <div className="absolute bottom-24 left-32 w-12 h-12 rounded-full bg-ember/10 backdrop-blur-2xl flex items-center justify-center shape-float-delay">
-          <GraduationCap className="w-6 h-6 text-ember opacity-50" />
+        <div className="absolute top-[40%] left-4 w-10 h-10 rounded-full bg-ember/15 backdrop-blur-2xl flex items-center justify-center shape-float-fast">
+          <Flame className="w-5 h-5 text-ember/60" />
         </div>
-        <div className="absolute top-1/2 -left-4 w-20 h-20 rounded-full bg-emerald-500/10 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
-          <Milestone className="w-10 h-10 text-emerald-500 opacity-50" />
+        <div className="absolute bottom-24 left-32 w-24 h-24 rounded-full bg-emerald-500/15 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
+          <Milestone className="w-10 h-10 text-emerald-600/60" />
+        </div>
+        <div className="absolute bottom-10 left-10 w-14 h-14 rounded-full bg-signal/15 backdrop-blur-2xl flex items-center justify-center shape-float">
+          <CheckCircle2 className="w-6 h-6 text-signal/60" />
         </div>
 
         {/* Right shapes */}
-        <div className="absolute top-24 right-20 w-14 h-14 rounded-full bg-ember/10 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
-          <Sparkles className="w-7 h-7 text-ember opacity-50" />
+        <div className="absolute top-10 right-24 w-24 h-24 rounded-full bg-ember/15 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
+          <Sparkles className="w-10 h-10 text-ember/60" />
         </div>
-        <div className="absolute bottom-32 right-12 w-24 h-24 rounded-full bg-signal/10 backdrop-blur-2xl flex items-center justify-center shape-float-delay">
-          <BookOpen className="w-12 h-12 text-signal opacity-50" />
+        <div className="absolute top-1/3 right-10 w-12 h-12 rounded-full bg-emerald-500/15 backdrop-blur-2xl flex items-center justify-center shape-float">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600/60" />
+        </div>
+        <div className="absolute bottom-40 right-8 w-16 h-16 rounded-full bg-signal/15 backdrop-blur-2xl flex items-center justify-center shape-float-fast">
+          <GraduationCap className="w-7 h-7 text-signal/60" />
+        </div>
+        <div className="absolute bottom-12 right-32 w-20 h-20 rounded-full bg-ember/15 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
+          <BookOpen className="w-9 h-9 text-ember/60" />
         </div>
       </div>
 
@@ -55,25 +64,25 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
         
         {/* Left copy column */}
         <div className="space-y-6 max-w-lg">
-          <h1 className="font-sans text-4xl md:text-5xl font-extrabold text-ink leading-tight tracking-tight">
+          <h1 className="font-sans text-5xl md:text-6xl lg:text-7xl font-extrabold text-ink leading-[1.05] tracking-tight">
             Personalised career roadmaps for BTech CS students.
           </h1>
           
-          <p className="text-base text-slate leading-relaxed">
+          <p className="text-lg text-slate leading-relaxed">
             Stop guessing your placement readiness. Take our 5-minute diagnostic quiz, find your level, and unlock a customized preparation sheet containing roadmaps, DSA trackers, and curated resources.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <button
               onClick={onStartAssessment}
-              className="px-8 py-3.5 bg-signal hover:bg-signal/95 text-sm font-bold text-white rounded-full shadow-lg shadow-signal/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="px-8 py-3.5 bg-signal hover:bg-signal/95 text-base font-bold text-white rounded-full shadow-lg shadow-signal/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               Start free assessment
               <ArrowRight className="h-4 w-4" />
             </button>
             <a
               href="#how-it-works"
-              className="px-8 py-3.5 border border-mist bg-white hover:bg-mist text-sm font-bold text-slate hover:text-ink rounded-full text-center transition-all flex items-center justify-center gap-1.5"
+              className="px-8 py-3.5 border border-mist bg-white hover:bg-mist text-base font-bold text-slate hover:text-ink rounded-full text-center transition-all flex items-center justify-center gap-1.5"
             >
               See how it works
             </a>
@@ -188,7 +197,7 @@ function ValueGrid() {
       <div className="max-w-[1200px] mx-auto px-6 space-y-12">
         <div className="text-center max-w-xl mx-auto space-y-3">
           <span className="text-xs font-bold text-signal uppercase tracking-widest block">Why CareerAgent?</span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-tight">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-ink leading-tight">
             Generic career roadmap advice doesn't know your gaps or your timeline.
           </h2>
         </div>
@@ -225,7 +234,7 @@ function HowItWorks({ onStartAssessment }) {
       <div className="max-w-[1200px] mx-auto px-6 space-y-12">
         <div className="text-center max-w-md mx-auto space-y-3">
           <span className="text-xs font-bold text-signal uppercase tracking-widest block">How it works</span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-ink">Four steps to your target placement</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-ink">Four steps to your target placement</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
@@ -269,7 +278,7 @@ function TrustSection() {
           <div className="inline-flex items-center justify-center p-2 rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
             <ShieldCheck className="h-6 w-6 glow-emerald" />
           </div>
-          <h2 className="text-2xl font-extrabold text-ink leading-tight">Built to never discourage you.</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-ink leading-tight">Built to never discourage you.</h2>
           <p className="text-xs text-slate leading-normal">
             Safety guardrails are natively baked into every agent interaction.
           </p>
@@ -303,7 +312,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-5">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 1</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-ink leading-snug">
               Year-wise custom roadmaps calibrated to your gaps.
             </h2>
             <p className="text-xs text-slate leading-relaxed">
@@ -341,7 +350,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="lg:order-2 space-y-5">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 2</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-ink leading-snug">
               Topic-wise DSA practice sheets with streak tracking.
             </h2>
             <p className="text-xs text-slate leading-relaxed">
@@ -391,7 +400,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-5">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 3</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-ink leading-snug">
               Filtered hackathons, CTFs, and open-source contests.
             </h2>
             <p className="text-xs text-slate leading-relaxed">
@@ -435,7 +444,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="lg:order-2 space-y-5">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 4</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-ink leading-snug">
               ATS-Optimized, project-focused resume builder.
             </h2>
             <p className="text-xs text-slate leading-relaxed">
@@ -498,7 +507,7 @@ function ResourceCards() {
       <div className="max-w-[1200px] mx-auto px-6 space-y-10">
         <div className="text-center max-w-sm mx-auto space-y-2">
           <span className="text-xs font-bold text-signal uppercase tracking-widest block">Resources</span>
-          <h2 className="text-2xl font-extrabold text-ink">Learn & Grow Daily</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-ink">Learn & Grow Daily</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

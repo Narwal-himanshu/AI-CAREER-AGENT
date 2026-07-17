@@ -38,20 +38,20 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full md:mx-4 md:mt-3 md:w-[calc(100%-2rem)] md:rounded-full bg-gradient-to-r from-signal-tint via-paper to-signal-tint bg-opacity-95 backdrop-blur-md border-b md:border border-mist shadow-sm">
+    <header className="sticky top-0 z-40 w-full md:mx-4 md:mt-3 md:w-[calc(100%-2rem)] md:rounded-full bg-gradient-to-r from-signal via-signal/90 to-ember/80 bg-opacity-95 backdrop-blur-md border-b md:border border-mist shadow-sm">
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
 
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <GraduationCap className="h-7 w-7 text-signal" />
-          <span className="font-sans font-extrabold text-xl text-ink tracking-tight">
+          <GraduationCap className="h-7 w-7 text-white" />
+          <span className="font-sans font-extrabold text-xl text-white tracking-tight">
             CareerAgent
           </span>
         </div>
 
         <nav className="hidden md:flex items-center gap-8">
           <div className="relative" onMouseEnter={() => setActiveMenu('product')} onMouseLeave={() => setActiveMenu(null)}>
-            <button className="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all">
-              Product <span className="text-[10px]">▼</span>
+            <button className="flex items-center gap-1 text-sm font-semibold text-white/80 hover:text-white py-5 transition-all">
+              Product <span className="text-[10px] text-white">▼</span>
             </button>
 
             {activeMenu === 'product' && (
@@ -101,13 +101,13 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
           <YearDropdown
             pathname={location.pathname}
             onSelectYear={onYearNav}
-            buttonClassName="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all cursor-pointer"
+            buttonClassName="flex items-center gap-1 text-sm font-semibold text-white/80 hover:text-white py-5 transition-all cursor-pointer"
             panelClassName="absolute top-full left-0 w-[240px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-2 z-50 dropdown-panel"
           />
 
           <div className="relative" onMouseEnter={() => setActiveMenu('resources')} onMouseLeave={() => setActiveMenu(null)}>
-            <button className="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all">
-              Resources <span className="text-[10px]">▼</span>
+            <button className="flex items-center gap-1 text-sm font-semibold text-white/80 hover:text-white py-5 transition-all">
+              Resources <span className="text-[10px] text-white">▼</span>
             </button>
             {activeMenu === 'resources' && (
               <div className="absolute top-full left-0 w-[220px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-1 dropdown-panel z-50">
@@ -124,11 +124,11 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
             )}
           </div>
 
-          <button onClick={() => navigate('/about')} className="text-sm font-semibold text-slate hover:text-ink transition-all cursor-pointer">About</button>
+          <button onClick={() => navigate('/about')} className="text-sm font-semibold text-white/80 hover:text-white transition-all cursor-pointer">About</button>
         </nav>
 
         <div className="hidden md:flex items-center gap-6">
-          <Search className="h-4 w-4 text-slate hover:text-ink cursor-pointer transition-colors" />
+          <Search className="h-4 w-4 text-white/80 hover:text-white cursor-pointer transition-colors" />
           {authUser ? (
             <UserMenu
               email={authUser.email}
@@ -140,13 +140,13 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
             <>
               <button
                 onClick={onStartAssessment}
-                className="text-sm font-semibold text-slate hover:text-ink transition-all cursor-pointer"
+                className="text-sm font-semibold text-white/80 hover:text-white transition-all cursor-pointer"
               >
                 Log in
               </button>
               <button
                 onClick={onStartAssessment}
-                className="px-5 py-2.5 bg-signal hover:bg-signal/90 text-sm font-bold text-white rounded-full shadow-sm hover:shadow transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-white text-signal hover:bg-white/90 hover:shadow-md hover:scale-[1.02] text-sm font-bold rounded-full shadow-sm transition-all cursor-pointer"
               >
                 Start free assessment
               </button>
@@ -154,7 +154,7 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
           )}
         </div>
 
-        <button className="md:hidden p-1 text-ink" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+        <button className="md:hidden p-1 text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
