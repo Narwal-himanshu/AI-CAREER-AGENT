@@ -27,16 +27,34 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
   }, [targetScore])
 
   return (
-    <section className="bg-paper py-16 md:py-24 border-b border-mist overflow-hidden">
-      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <section className="bg-paper py-16 md:py-24 border-b border-mist overflow-hidden relative">
+
+      {/* Background Decorative Shapes */}
+      <div className="hidden md:flex absolute inset-0 pointer-events-none overflow-hidden max-w-[1400px] mx-auto">
+        {/* Left shapes */}
+        <div className="absolute top-16 left-12 w-16 h-16 rounded-full bg-signal/10 backdrop-blur-2xl flex items-center justify-center shape-float">
+          <Code2 className="w-8 h-8 text-signal opacity-50" />
+        </div>
+        <div className="absolute bottom-24 left-32 w-12 h-12 rounded-full bg-ember/10 backdrop-blur-2xl flex items-center justify-center shape-float-delay">
+          <GraduationCap className="w-6 h-6 text-ember opacity-50" />
+        </div>
+        <div className="absolute top-1/2 -left-4 w-20 h-20 rounded-full bg-emerald-500/10 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
+          <Milestone className="w-10 h-10 text-emerald-500 opacity-50" />
+        </div>
+
+        {/* Right shapes */}
+        <div className="absolute top-24 right-20 w-14 h-14 rounded-full bg-ember/10 backdrop-blur-2xl flex items-center justify-center shape-float-slow">
+          <Sparkles className="w-7 h-7 text-ember opacity-50" />
+        </div>
+        <div className="absolute bottom-32 right-12 w-24 h-24 rounded-full bg-signal/10 backdrop-blur-2xl flex items-center justify-center shape-float-delay">
+          <BookOpen className="w-12 h-12 text-signal opacity-50" />
+        </div>
+      </div>
+
+      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
         
         {/* Left copy column */}
         <div className="space-y-6 max-w-lg">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-signal-tint border border-signal/10 text-xs font-bold text-signal">
-            <Sparkles className="h-3.5 w-3.5" />
-            Adaptive AI Guidance for Engineers
-          </div>
-          
           <h1 className="font-sans text-4xl md:text-5xl font-extrabold text-ink leading-tight tracking-tight">
             Personalised career roadmaps for BTech CS students.
           </h1>
@@ -129,9 +147,12 @@ function LogoStrip() {
         <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">
           Built with content from standard learning ecosystems
         </span>
-        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-45">
+        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
           {['LeetCode', 'GeeksforGeeks', 'Udemy', 'Coursera', 'YouTube'].map((logo) => (
-            <span key={logo} className="font-mono text-sm font-bold text-ink tracking-tight select-none">
+            <span
+              key={logo}
+              className="font-mono text-sm font-bold text-ink tracking-tight select-none opacity-45 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-200"
+            >
               [{logo.toUpperCase()}]
             </span>
           ))}
@@ -174,7 +195,7 @@ function ValueGrid() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((v, i) => (
-            <div key={i} className="bg-white border border-mist p-6 rounded-2xl hover:border-signal/20 transition-all flex flex-col justify-between">
+            <div key={i} className="bg-white border border-slate/20 p-6 rounded-2xl hover:border-signal/20 transition-all flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="h-8 w-8 rounded-lg bg-signal-tint flex items-center justify-center text-signal font-bold text-sm">
                   {i + 1}
@@ -207,9 +228,9 @@ function HowItWorks({ onStartAssessment }) {
           <h2 className="text-2xl md:text-3xl font-extrabold text-ink">Four steps to your target placement</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
           {steps.map((s, idx) => (
-            <div key={idx} className="relative space-y-3">
+            <div key={idx} className="relative space-y-3 bg-white border border-slate/20 hover:border-signal/20 rounded-2xl p-6 transition-all">
               <div className="font-mono text-4xl font-extrabold text-signal/15 tracking-tight">
                 {s.num}
               </div>

@@ -38,7 +38,7 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur-md border-b border-mist shadow-sm">
+    <header className="sticky top-0 z-40 w-full md:mx-4 md:mt-3 md:w-[calc(100%-2rem)] md:rounded-full bg-gradient-to-r from-signal-tint via-paper to-signal-tint bg-opacity-95 backdrop-blur-md border-b md:border border-mist shadow-sm">
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
 
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
