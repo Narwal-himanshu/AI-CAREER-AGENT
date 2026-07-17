@@ -107,9 +107,28 @@ h1, h2, h3, h4, h5, h6 {
   animation: submenu-in 140ms ease-out;
 }
 
+@keyframes shape-drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+.shape-float {
+  animation: shape-drift 6s ease-in-out infinite;
+}
+.shape-float-slow {
+  animation: shape-drift 8s ease-in-out infinite;
+}
+.shape-float-delay {
+  animation: shape-drift 7s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dropdown-panel,
-  .submenu-panel {
+  .submenu-panel,
+  .shape-float,
+  .shape-float-slow,
+  .shape-float-delay {
     animation: none;
   }
 }
