@@ -1,3 +1,4 @@
+import { Reveal } from "../components/Reveal";
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { 
@@ -54,7 +55,7 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
       <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
         
         {/* Left copy column */}
-        <div className="space-y-6 max-w-lg">
+        <Reveal delay={0}><div className="space-y-6 max-w-lg">
           <h1 className="font-sans text-4xl md:text-5xl font-extrabold text-ink leading-tight tracking-tight">
             Personalised career roadmaps for BTech CS students.
           </h1>
@@ -79,13 +80,22 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
             </a>
           </div>
         </div>
+        </Reveal>
 
         {/* Right Readiness Ring visual column */}
-        <div className="flex flex-col items-center justify-center relative">
+        <Reveal delay={150} className="flex flex-col items-center justify-center relative">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[320px] w-[320px] bg-signal/3 rounded-full blur-3xl -z-10"></div>
           
           <div className="bg-white border border-mist p-8 rounded-3xl shadow-lg flex flex-col items-center gap-4 relative">
-            <div className="absolute top-4 right-4">
+            {/* Stickers */}
+            <div className="absolute -left-6 bottom-8 w-12 h-12 rounded-full bg-ember/10 backdrop-blur-xl flex items-center justify-center shape-float-delay z-10 border border-white/50 shadow-sm">
+              <Flame className="w-5 h-5 text-ember" />
+            </div>
+            <div className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-signal/10 backdrop-blur-xl flex items-center justify-center shape-float z-10 border border-white/50 shadow-sm">
+              <Sparkles className="w-4 h-4 text-signal" />
+            </div>
+
+            <div className="absolute top-4 right-4 z-10">
               <span className="flex h-3 w-3 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
@@ -94,7 +104,17 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
 
             {/* Circular Readiness ring */}
             <div className="relative flex items-center justify-center">
-              <svg className="w-48 h-48" viewBox="0 0 100 100">
+              {/* Soft blurred glow behind ring */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-signal via-ember to-emerald-500 blur-2xl opacity-20 rounded-full scale-90"></div>
+
+              <svg className="w-56 h-56 relative z-10" viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#4F46E5" /> {/* signal */}
+                    <stop offset="50%" stopColor="#F59E0B" /> {/* ember */}
+                    <stop offset="100%" stopColor="#10B981" /> {/* emerald-500 */}
+                  </linearGradient>
+                </defs>
                 <circle 
                   cx="50" 
                   cy="50" 
@@ -107,7 +127,7 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
                   cx="50" 
                   cy="50" 
                   r="42" 
-                  stroke="#4F46E5" 
+                  stroke="url(#score-gradient)"
                   strokeWidth="7" 
                   fill="transparent"
                   strokeDasharray="263.8" 
@@ -120,19 +140,21 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
                   x="50" 
                   y="55" 
                   textAnchor="middle" 
-                  className="font-mono font-extrabold text-2xl fill-ink"
+                  className="font-mono font-black text-3xl"
+                  fill="url(#score-gradient)"
                 >
                   {score}%
                 </text>
               </svg>
             </div>
 
-            <div className="text-center">
+            <div className="text-center relative z-10">
+              <span className="text-[10px] font-bold text-signal uppercase tracking-widest block mb-1">YOUR LEVEL</span>
               <h3 className="text-sm font-extrabold text-ink">Readiness Classification Score</h3>
               <p className="text-xs text-slate mt-1">{scoreLabel}</p>
             </div>
           </div>
-        </div>
+        </Reveal>
 
       </div>
     </section>
@@ -144,17 +166,20 @@ function LogoStrip() {
   return (
     <section className="bg-mist py-8 border-b border-mist/50">
       <div className="max-w-[1200px] mx-auto px-6 text-center">
-        <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">
-          Built with content from standard learning ecosystems
-        </span>
+        <Reveal delay={0}>
+          <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">
+            Built with content from standard learning ecosystems
+          </span>
+        </Reveal>
         <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-          {['LeetCode', 'GeeksforGeeks', 'Udemy', 'Coursera', 'YouTube'].map((logo) => (
-            <span
-              key={logo}
-              className="font-mono text-sm font-bold text-ink tracking-tight select-none opacity-45 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-200"
-            >
-              [{logo.toUpperCase()}]
-            </span>
+          {['LeetCode', 'GeeksforGeeks', 'Udemy', 'Coursera', 'YouTube'].map((logo, index) => (
+            <Reveal key={logo} delay={(index + 1) * 80}>
+              <span
+                className="font-mono text-sm font-bold text-ink tracking-tight select-none opacity-45 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-200"
+              >
+                [{logo.toUpperCase()}]
+              </span>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -186,24 +211,28 @@ function ValueGrid() {
   return (
     <section className="bg-paper py-16 md:py-24 border-b border-mist">
       <div className="max-w-[1200px] mx-auto px-6 space-y-12">
-        <div className="text-center max-w-xl mx-auto space-y-3">
-          <span className="text-xs font-bold text-signal uppercase tracking-widest block">Why CareerAgent?</span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-tight">
-            Generic career roadmap advice doesn't know your gaps or your timeline.
-          </h2>
-        </div>
+        <Reveal delay={0}>
+          <div className="text-center max-w-xl mx-auto space-y-3">
+            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Why CareerAgent?</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-tight">
+              Generic career roadmap advice doesn't know your gaps or your timeline.
+            </h2>
+          </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((v, i) => (
-            <div key={i} className="bg-white border border-slate/20 p-6 rounded-2xl hover:border-signal/20 transition-all flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="h-8 w-8 rounded-lg bg-signal-tint flex items-center justify-center text-signal font-bold text-sm">
-                  {i + 1}
+            <Reveal key={i} delay={i * 100} className="flex">
+              <div className="w-full bg-white border border-slate/20 p-6 rounded-2xl hover:border-signal/20 transition-all flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="h-8 w-8 rounded-lg bg-signal-tint flex items-center justify-center text-signal font-bold text-sm">
+                    {i + 1}
+                  </div>
+                  <h3 className="text-sm font-bold text-ink">{v.title}</h3>
+                  <p className="text-xs text-slate leading-relaxed">{v.desc}</p>
                 </div>
-                <h3 className="text-sm font-bold text-ink">{v.title}</h3>
-                <p className="text-xs text-slate leading-relaxed">{v.desc}</p>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -223,20 +252,24 @@ function HowItWorks({ onStartAssessment }) {
   return (
     <section id="how-it-works" className="bg-mist py-16 md:py-24 border-b border-mist">
       <div className="max-w-[1200px] mx-auto px-6 space-y-12">
-        <div className="text-center max-w-md mx-auto space-y-3">
-          <span className="text-xs font-bold text-signal uppercase tracking-widest block">How it works</span>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-ink">Four steps to your target placement</h2>
-        </div>
+        <Reveal delay={0}>
+          <div className="text-center max-w-md mx-auto space-y-3">
+            <span className="text-xs font-bold text-signal uppercase tracking-widest block">How it works</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-ink">Four steps to your target placement</h2>
+          </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
           {steps.map((s, idx) => (
-            <div key={idx} className="relative space-y-3 bg-white border border-slate/20 hover:border-signal/20 rounded-2xl p-6 transition-all">
-              <div className="font-mono text-4xl font-extrabold text-signal/15 tracking-tight">
-                {s.num}
+            <Reveal key={idx} delay={idx * 100} className="flex">
+              <div className="w-full relative space-y-3 bg-white border border-slate/20 hover:border-signal/20 rounded-2xl p-6 transition-all">
+                <div className="font-mono text-4xl font-extrabold text-signal/15 tracking-tight">
+                  {s.num}
+                </div>
+                <h3 className="text-sm font-bold text-ink">{s.title}</h3>
+                <p className="text-xs text-slate leading-relaxed">{s.desc}</p>
               </div>
-              <h3 className="text-sm font-bold text-ink">{s.title}</h3>
-              <p className="text-xs text-slate leading-relaxed">{s.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
@@ -265,27 +298,31 @@ function TrustSection() {
   return (
     <section className="bg-paper py-16 border-b border-mist">
       <div className="max-w-[1200px] mx-auto px-6 space-y-10">
-        <div className="max-w-lg mx-auto text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-2 rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
-            <ShieldCheck className="h-6 w-6 glow-emerald" />
+        <Reveal delay={0}>
+          <div className="max-w-lg mx-auto text-center space-y-2">
+            <div className="inline-flex items-center justify-center p-2 rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
+              <ShieldCheck className="h-6 w-6 glow-emerald" />
+            </div>
+            <h2 className="text-2xl font-extrabold text-ink leading-tight">Built to never discourage you.</h2>
+            <p className="text-xs text-slate leading-normal">
+              Safety guardrails are natively baked into every agent interaction.
+            </p>
           </div>
-          <h2 className="text-2xl font-extrabold text-ink leading-tight">Built to never discourage you.</h2>
-          <p className="text-xs text-slate leading-normal">
-            Safety guardrails are natively baked into every agent interaction.
-          </p>
-        </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {points.map((p, i) => (
-            <div key={i} className="border border-mist p-5 rounded-2xl bg-white space-y-2.5">
-              <h3 className="text-xs font-bold text-ink flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                {p.title}
-              </h3>
-              <p className="text-[11px] text-slate leading-relaxed">
-                {p.text}
-              </p>
-            </div>
+            <Reveal key={i} delay={i * 100} className="flex">
+              <div className="w-full border border-mist p-5 rounded-2xl bg-white space-y-2.5">
+                <h3 className="text-xs font-bold text-ink flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                  {p.title}
+                </h3>
+                <p className="text-[11px] text-slate leading-relaxed">
+                  {p.text}
+                </p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -296,25 +333,37 @@ function TrustSection() {
 // Sub-component 8: Interactive CSS Feature Showcases
 function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav }) {
   return (
-    <section className="bg-paper py-16 md:py-24 space-y-24 border-b border-mist">
-      <div className="max-w-[1200px] mx-auto px-6 space-y-20">
+    <section className="bg-ink py-16 md:py-24 space-y-24 border-b border-mist relative overflow-hidden">
+      {/* Dark background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-dot-pattern text-white/5 mix-blend-overlay"></div>
+        {/* Glow blobs */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-signal/15 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-ember/10 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/3"></div>
+        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-signal/10 rounded-full blur-[100px] -translate-y-1/2 -translate-x-1/2"></div>
+      </div>
+
+      <div className="max-w-[1200px] mx-auto px-6 space-y-20 relative z-10">
         
         {/* Showcase Row 1: Career Roadmap (Visual Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-5">
-            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 1</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
-              Year-wise custom roadmaps calibrated to your gaps.
-            </h2>
-            <p className="text-xs text-slate leading-relaxed">
-              Based on your onboarding domain selection and diagnostic scores, downstream agents build a custom preparation timeline. Learn DSA trees when you have time, start projects when you have foundations.
-            </p>
-            <button onClick={() => onFeatureNav('roadmap')} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
-              Explore Roadmap Features &rarr;
-            </button>
-          </div>
+          <Reveal delay={0}>
+            <div className="space-y-5">
+              <span className="text-xs font-bold text-signal-tint uppercase tracking-widest block">Feature 1</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
+                Year-wise custom roadmaps calibrated to your gaps.
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Based on your onboarding domain selection and diagnostic scores, downstream agents build a custom preparation timeline. Learn DSA trees when you have time, start projects when you have foundations.
+              </p>
+              <button onClick={() => onFeatureNav('roadmap')} className="text-xs font-bold text-signal-tint hover:text-white flex items-center gap-1 cursor-pointer">
+                Explore Roadmap Features &rarr;
+              </button>
+            </div>
+          </Reveal>
           {/* Mock visual panel */}
-          <div className="bg-mist p-6 rounded-2xl border border-mist flex flex-col gap-3.5 relative overflow-hidden">
+          <Reveal delay={150}>
+            <div className="bg-mist p-6 rounded-2xl border border-mist flex flex-col gap-3.5 relative overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.25)]">
             <span className="text-[10px] font-bold text-slate block">MOCK INTERACTIVE ROADMAP VIEW</span>
             <div className="space-y-3 relative">
               <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-signal/15"></div>
@@ -335,24 +384,28 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
               ))}
             </div>
           </div>
+          </Reveal>
         </div>
 
         {/* Showcase Row 2: DSA Practice Sheet (Visual Left) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="lg:order-2 space-y-5">
-            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 2</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
-              Topic-wise DSA practice sheets with streak tracking.
-            </h2>
-            <p className="text-xs text-slate leading-relaxed">
-              Track your LeetCode and CodeChef daily progress. Filter problems by Easy, Medium, and Hard, synced with a streak calendar that records daily solve consistency and alerts you to gaps.
-            </p>
-            <button onClick={() => onFeatureNav('dsa')} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
-              Practice DSA &rarr;
-            </button>
-          </div>
+          <Reveal delay={0} className="lg:order-2">
+            <div className="space-y-5">
+              <span className="text-xs font-bold text-ember uppercase tracking-widest block">Feature 2</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
+                Topic-wise DSA practice sheets with streak tracking.
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Track your LeetCode and CodeChef daily progress. Filter problems by Easy, Medium, and Hard, synced with a streak calendar that records daily solve consistency and alerts you to gaps.
+              </p>
+              <button onClick={() => onFeatureNav('dsa')} className="text-xs font-bold text-ember hover:text-white flex items-center gap-1 cursor-pointer">
+                Practice DSA &rarr;
+              </button>
+            </div>
+          </Reveal>
           {/* Mock visual panel */}
-          <div className="bg-mist p-6 rounded-2xl border border-mist space-y-3 lg:order-1">
+          <Reveal delay={150} className="lg:order-1">
+            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-3 shadow-[0_0_50px_rgba(245,158,11,0.25)]">
             <div className="flex justify-between items-center text-[10px] font-bold text-slate">
               <span>MOCK DSA PROGRESS TRACKER</span>
               <span className="text-ember flex items-center gap-1">
@@ -384,25 +437,29 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
                 </div>
               ))}
             </div>
-          </div>
+            </div>
+          </Reveal>
         </div>
 
         {/* Showcase Row 3: Opportunities Feed (Visual Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-5">
-            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 3</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
-              Filtered hackathons, CTFs, and open-source contests.
-            </h2>
-            <p className="text-xs text-slate leading-relaxed">
-              We scrape CTFs, hackathons, and contests globally. Downstream search agents filter them specifically matching your skill levels and domains to guarantee realistic engagement.
-            </p>
-            <button onClick={onGoToOpportunities} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
-              Browse Active Feeds &rarr;
-            </button>
-          </div>
+          <Reveal delay={0}>
+            <div className="space-y-5">
+              <span className="text-xs font-bold text-signal-tint uppercase tracking-widest block">Feature 3</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
+                Filtered hackathons, CTFs, and open-source contests.
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                We scrape CTFs, hackathons, and contests globally. Downstream search agents filter them specifically matching your skill levels and domains to guarantee realistic engagement.
+              </p>
+              <button onClick={onGoToOpportunities} className="text-xs font-bold text-signal-tint hover:text-white flex items-center gap-1 cursor-pointer">
+                Browse Active Feeds &rarr;
+              </button>
+            </div>
+          </Reveal>
           {/* Mock visual panel */}
-          <div className="bg-mist p-6 rounded-2xl border border-mist space-y-4">
+          <Reveal delay={150}>
+            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-4 shadow-[0_0_50px_rgba(79,70,229,0.25)]">
             <span className="text-[10px] font-bold text-slate block">MOCK OPPORTUNITY DETAILS CARD</span>
             <div className="p-4 bg-white border border-mist rounded-xl space-y-3 relative">
               <span className="absolute top-4 right-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded-full">
@@ -428,25 +485,29 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
                 </button>
               </div>
             </div>
-          </div>
+            </div>
+          </Reveal>
         </div>
 
         {/* Showcase Row 4: Resume Builder (Visual Left) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="lg:order-2 space-y-5">
-            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Feature 4</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-snug">
-              ATS-Optimized, project-focused resume builder.
-            </h2>
-            <p className="text-xs text-slate leading-relaxed">
-              Compile your completed DSA problems, project links, and CGPA into an ATS-friendly resume layout. Download a validated PDF that matches company onboarding requirements.
-            </p>
-            <button onClick={() => onFeatureNav('resume')} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
-              Build Resume &rarr;
-            </button>
-          </div>
+          <Reveal delay={0} className="lg:order-2">
+            <div className="space-y-5">
+              <span className="text-xs font-bold text-ember uppercase tracking-widest block">Feature 4</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
+                ATS-Optimized, project-focused resume builder.
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Compile your completed DSA problems, project links, and CGPA into an ATS-friendly resume layout. Download a validated PDF that matches company onboarding requirements.
+              </p>
+              <button onClick={() => onFeatureNav('resume')} className="text-xs font-bold text-ember hover:text-white flex items-center gap-1 cursor-pointer">
+                Build Resume &rarr;
+              </button>
+            </div>
+          </Reveal>
           {/* Mock visual panel */}
-          <div className="bg-mist p-6 rounded-2xl border border-mist lg:order-1 space-y-3">
+          <Reveal delay={150} className="lg:order-1">
+            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-3 shadow-[0_0_50px_rgba(245,158,11,0.25)]">
             <span className="text-[10px] font-bold text-slate block">MOCK ATS RESUME LAYOUT PREVIEW</span>
             <div className="p-5 bg-white border border-mist rounded-xl space-y-3 text-[10px] text-ink font-sans shadow-sm">
               <div className="text-center border-b border-mist pb-2">
@@ -465,7 +526,8 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
                 <p><span className="font-semibold">Languages / Core:</span> Python, OOP, DSA (Intermediate classification level)</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Reveal>
         </div>
 
       </div>
@@ -494,27 +556,33 @@ function ResourceCards() {
   ]
 
   return (
-    <section className="bg-mist py-16 border-b border-mist">
+    <section className="bg-mist py-16 border-b border-mist relative">
+      {/* Sharp Accent Divider */}
+      <div className="absolute top-0 left-0 w-full h-8 -mt-8 bg-mist" style={{ clipPath: 'polygon(0 100%, 100% 0, 100% 100%)' }}></div>
       <div className="max-w-[1200px] mx-auto px-6 space-y-10">
-        <div className="text-center max-w-sm mx-auto space-y-2">
-          <span className="text-xs font-bold text-signal uppercase tracking-widest block">Resources</span>
-          <h2 className="text-2xl font-extrabold text-ink">Learn & Grow Daily</h2>
-        </div>
+        <Reveal delay={0}>
+          <div className="text-center max-w-sm mx-auto space-y-2">
+            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Resources</span>
+            <h2 className="text-2xl font-extrabold text-ink">Learn & Grow Daily</h2>
+          </div>
+        </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {cards.map((c, i) => (
-            <div key={i} className="bg-white border border-mist p-6 rounded-2xl flex flex-col justify-between hover:border-signal/20 transition-all">
-              <div className="space-y-3">
-                <span className="text-[9px] font-bold text-signal uppercase tracking-wider block bg-signal-tint px-2.5 py-0.5 rounded-full w-max">
-                  {c.label}
-                </span>
-                <h3 className="text-sm font-extrabold text-ink leading-snug">{c.title}</h3>
-                <p className="text-xs text-slate leading-relaxed">{c.desc}</p>
+            <Reveal key={i} delay={i * 100} className="flex">
+              <div className="w-full bg-white border border-mist p-6 rounded-2xl flex flex-col justify-between hover:border-signal/20 transition-all">
+                <div className="space-y-3">
+                  <span className="text-[9px] font-bold text-signal uppercase tracking-wider block bg-signal-tint px-2.5 py-0.5 rounded-full w-max">
+                    {c.label}
+                  </span>
+                  <h3 className="text-sm font-extrabold text-ink leading-snug">{c.title}</h3>
+                  <p className="text-xs text-slate leading-relaxed">{c.desc}</p>
+                </div>
+                <button className="text-xs font-bold text-signal hover:text-signal/80 mt-6 text-left flex items-center gap-0.5">
+                  Read resource &rarr;
+                </button>
               </div>
-              <button className="text-xs font-bold text-signal hover:text-signal/80 mt-6 text-left flex items-center gap-0.5">
-                Read resource &rarr;
-              </button>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
