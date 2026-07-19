@@ -25,3 +25,12 @@ export function roadmapPathForSlug(slug) {
 export function getYearBySlug(slug) {
   return YEAR_OPTIONS.find(y => y.slug === slug);
 }
+
+export function getYearByNum(num) {
+  return YEAR_OPTIONS.find(y => y.num === num);
+}
+
+export function slugForYear(year) {
+  const found = YEAR_OPTIONS.find(y => y.num === year);
+  return found ? found.slug : null;
+}

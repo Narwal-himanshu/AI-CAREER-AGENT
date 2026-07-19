@@ -1,10 +1,4 @@
-import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Search, Menu, X, ArrowRight, GraduationCap, ChevronDown
-} from 'lucide-react'
-import UserMenu from '../components/UserMenu'
-import YearDropdown from '../components/YearDropdown'
+import React from 'react'
 import { Navbar, FinalCTA, Footer } from '../components/SharedLanding'
 
 function About({

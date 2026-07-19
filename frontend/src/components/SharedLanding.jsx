@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
-  Search, Menu, X, ArrowRight, GraduationCap, ChevronDown
+  Search, Menu, X, ArrowRight, GraduationCap
 } from 'lucide-react'
 import UserMenu from './UserMenu'
-import YearDropdown from './YearDropdown'
-import { YEAR_OPTIONS, isYearActive } from '../lib/yearNav'
 
 export function AnnouncementBar() {
   return (
@@ -19,8 +17,6 @@ export function AnnouncementBar() {
 export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, onYearNav, authUser, onGoToProfile, onSignOut }) {
   const [activeMenu, setActiveMenu] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [mobileYearOpen, setMobileYearOpen] = useState(false)
-  const location = useLocation()
   const navigate = useNavigate()
 
   const handleMenuToggle = (menu) => {
@@ -98,13 +94,6 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
             )}
           </div>
 
-          <YearDropdown
-            pathname={location.pathname}
-            onSelectYear={onYearNav}
-            buttonClassName="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all cursor-pointer"
-            panelClassName="absolute top-full left-0 w-[240px] bg-white border border-mist rounded-2xl shadow-xl p-4 space-y-2 z-50 dropdown-panel"
-          />
-
           <div className="relative" onMouseEnter={() => setActiveMenu('resources')} onMouseLeave={() => setActiveMenu(null)}>
             <button className="flex items-center gap-1 text-sm font-semibold text-slate hover:text-ink py-5 transition-all">
               Resources <span className="text-[10px]">▼</span>
@@ -172,39 +161,6 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
                 {item}
               </button>
             ))}
-          </div>
-
-          <div className="border-t border-mist pt-3">
-            <button
-              type="button"
-              onClick={() => setMobileYearOpen((v) => !v)}
-              aria-expanded={mobileYearOpen}
-              aria-controls="mobile-year-menu"
-              className="w-full flex items-center justify-between font-bold text-xs text-slate uppercase px-2 mb-1 py-1"
-            >
-              By year
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${mobileYearOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {mobileYearOpen && (
-              <div id="mobile-year-menu" className="space-y-1 submenu-panel">
-                {YEAR_OPTIONS.map((item) => {
-                  const active = isYearActive(location.pathname, item.slug)
-                  return (
-                    <button
-                      key={item.slug}
-                      onClick={() => { setMobileMenuOpen(false); setMobileYearOpen(false); onYearNav(item.slug); }}
-                      aria-current={active ? 'page' : undefined}
-                      className={`w-full text-left py-2 px-2 text-sm font-medium rounded-lg transition-colors ${
-                        active ? 'bg-signal-tint text-signal font-bold' : 'text-ink hover:bg-mist'
-                      }`}
-                    >
-                      {item.label}
-                      <span className="block text-[11px] text-slate font-normal mt-0.5">{item.blurb}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
           </div>
 
           <button

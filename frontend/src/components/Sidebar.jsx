@@ -1,36 +1,26 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Award, RefreshCw, GraduationCap, Milestone, Code2, BookOpen, FileText,
-  PanelLeftClose, PanelLeftOpen, X, ChevronDown
+  PanelLeftClose, PanelLeftOpen, X
 } from 'lucide-react'
 import UserMenu from './UserMenu'
-import { YEAR_OPTIONS, isYearActive, isRoadmapSection, roadmapPathForSlug } from '../lib/yearNav'
+import { isRoadmapSection } from '../lib/yearNav'
 
 // Shared sidebar widths so App.jsx can offset the main content by the same amount.
 export const SIDEBAR_WIDTH_EXPANDED = 'w-64'
 export const SIDEBAR_WIDTH_COLLAPSED = 'w-20'
 
 function Sidebar({
-  onRestart, onGoHome, email, displayName, onGoToProfile, onSignOut, onYearNav,
+  onRestart, onGoHome, email, displayName, onGoToProfile, onSignOut,
   collapsed = false, onToggleCollapse, mobileOpen = false, onCloseMobile,
 }) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Keep the "By Year" submenu expanded whenever the user is anywhere under
-  // /roadmap, and collapsed elsewhere by default. This is the same
-  // `location.pathname` the Navbar dropdown reads, so the two never disagree
-  // about which year (if any) is currently active.
-  const [yearMenuOpen, setYearMenuOpen] = useState(() => isRoadmapSection(location.pathname))
-
-  useEffect(() => {
-    if (isRoadmapSection(location.pathname)) setYearMenuOpen(true)
-  }, [location.pathname])
-
   const menuItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'roadmap', name: 'Career Roadmap', icon: Milestone, expandable: true },
+    { id: 'roadmap', name: 'Career Roadmap', icon: Milestone },
     { id: 'dsa', name: 'DSA Practice', icon: Code2 },
     { id: 'courses', name: 'Courses', icon: BookOpen },
     { id: 'opportunities', name: 'Opportunities', icon: Award },
@@ -39,11 +29,6 @@ function Sidebar({
 
   const handleNavigate = (id) => {
     navigate(`/${id}`)
-    onCloseMobile?.()
-  }
-
-  const handleYearSelect = (slug) => {
-    onYearNav ? onYearNav(slug) : navigate(roadmapPathForSlug(slug))
     onCloseMobile?.()
   }
 
@@ -118,61 +103,21 @@ function Sidebar({
                 const isActive = item.id === 'roadmap'
                   ? isRoadmapSection(location.pathname)
                   : location.pathname === `/${item.id}`
-                const isYearExpandable = item.expandable && !collapsed
 
                 return (
-                  <div key={item.id}>
-                    <div
-                      className={`flex w-full items-center rounded-xl transition-all duration-250 ${
-                        isActive ? 'bg-signal-tint border border-signal/10' : ''
-                      }`}
-                    >
-                      <button
-                        onClick={() => handleNavigate(item.id)}
-                        title={collapsed ? item.name : undefined}
-                        className={`flex flex-1 items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all duration-250 cursor-pointer ${
-                          collapsed ? 'justify-center px-0' : ''
-                        } ${
-                          isActive ? 'text-signal font-extrabold' : 'text-slate hover:bg-mist hover:text-ink'
-                        }`}
-                      >
-                        <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-signal' : 'text-slate'}`} />
-                        {!collapsed && <span className="whitespace-nowrap">{item.name}</span>}
-                      </button>
-
-                      {isYearExpandable && (
-                        <button
-                          onClick={() => setYearMenuOpen((v) => !v)}
-                          aria-expanded={yearMenuOpen}
-                          aria-controls="sidebar-year-submenu"
-                          aria-label={yearMenuOpen ? 'Collapse by-year list' : 'Expand by-year list'}
-                          className={`p-3 pr-4 rounded-xl cursor-pointer transition-colors ${isActive ? 'text-signal' : 'text-slate hover:text-ink'}`}
-                        >
-                          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${yearMenuOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                      )}
-                    </div>
-
-                    {isYearExpandable && yearMenuOpen && (
-                      <div id="sidebar-year-submenu" className="mt-1 ml-4 pl-3 border-l border-mist space-y-0.5 submenu-panel">
-                        {YEAR_OPTIONS.map((year) => {
-                          const active = isYearActive(location.pathname, year.slug)
-                          return (
-                            <button
-                              key={year.slug}
-                              onClick={() => handleYearSelect(year.slug)}
-                              aria-current={active ? 'page' : undefined}
-                              className={`flex w-full items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                                active ? 'bg-signal-tint text-signal' : 'text-slate hover:bg-mist hover:text-ink'
-                              }`}
-                            >
-                              {year.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavigate(item.id)}
+                    title={collapsed ? item.name : undefined}
+                    className={`flex w-full items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all duration-250 cursor-pointer ${
+                      collapsed ? 'justify-center px-0' : ''
+                    } ${
+                      isActive ? 'bg-signal-tint border border-signal/10 text-signal font-extrabold' : 'text-slate hover:bg-mist hover:text-ink'
+                    }`}
+                  >
+                    <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-signal' : 'text-slate'}`} />
+                    {!collapsed && <span className="whitespace-nowrap">{item.name}</span>}
+                  </button>
                 )
               })}
             </nav>

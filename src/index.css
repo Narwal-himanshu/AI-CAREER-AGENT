@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Geist', sans-serif;
+  
+  --color-paper: #FFFFFF;
+  --color-mist: #F5F6FA;
+  --color-ink: #14161C;
+  --color-slate: #5B5F6B;
+  --color-signal: #4F46E5;
+  --color-signal-tint: #EEF0FF;
+  --color-ember: #F59E0B;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  overflow-x: hidden;
+}
+
+/* Centralized Heading Font Helper */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Geist', sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-mist);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-slate);
+  opacity: 0.3;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink);
+}
+
+/* Light Theme Card Component Reset */
+.theme-card {
+  background-color: var(--color-paper);
+  border: 1px solid rgba(20, 22, 28, 0.08); /* 1px neutral gray hairline */
+  border-radius: 16px; /* 16px radius */
+}
+
+/* Light Theme Input / Select Reset */
+.theme-input {
+  background-color: var(--color-paper);
+  border: 1px solid rgba(20, 22, 28, 0.12);
+  border-radius: 8px; /* 8px radius */
+  height: 40px; /* 40px height */
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+
+.theme-input:focus {
+  border-color: var(--color-signal);
+  box-shadow: 0 0 0 2px var(--color-signal-tint);
+  outline: none;
+}

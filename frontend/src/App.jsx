@@ -23,7 +23,7 @@ import About from './pages/About'
 import Sidebar from './components/Sidebar'
 import { Menu, Loader2 } from 'lucide-react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { roadmapPathForSlug } from './lib/yearNav'
+import { roadmapPathForSlug, slugForYear } from './lib/yearNav'
 
 // Where we stash the page a signed-out (or profile-less) visitor was trying to
 // reach, e.g. "/roadmap/3rd-year", so we can send them there automatically
@@ -173,7 +173,7 @@ function App() {
       return
     }
     const routes = {
-      roadmap: '/roadmap',
+      roadmap: studentProfile ? roadmapPathForSlug(slugForYear(studentProfile?.profile?.year || 2)) : '/onboarding',
       dsa: '/dsa',
       courses: '/courses',
       resume: '/resume',
@@ -375,11 +375,12 @@ function App() {
             requireProfile(<Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleRestartAssessment} />)
           } />
           <Route path="/opportunities" element={<Opportunities profile={studentProfile} analysis={quizAnalysis} />} />
-          {/* Base roadmap (uses the student's own year) and the four "By Year"
-              deep links share the same Roadmap component — it reads :yearSlug
-              via useParams and reuses the identical fetch/render logic. */}
+          {/* Base /roadmap always redirects to the student's own year.
+              The :yearSlug route shows the focused year view. */}
           <Route path="/roadmap" element={
-            requireProfile(<Roadmap profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)
+            studentProfile
+              ? <Navigate to={roadmapPathForSlug(slugForYear(studentProfile?.profile?.year || 2))} replace />
+              : <Navigate to="/onboarding" replace />
           } />
           <Route path="/roadmap/:yearSlug" element={
             requireProfile(<Roadmap profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)

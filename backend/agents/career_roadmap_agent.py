@@ -72,19 +72,19 @@ class CareerRoadmapAgent:
             student_name=request.name,
             domain=request.domain,
             career_goal=request.career_goal,
-            total_years=4 - request.year + 1,
+            total_years=1,
             plan=[{
-                'year': y,
-                'theme': f'Year {y} Focus',
-                'focus_areas': [f'{request.domain} fundamentals', 'Communication skills', 'Networking'] if y == request.year else ['Advanced topics', 'Projects', 'Interview prep'],
+                'year': request.year,
+                'theme': theme,
+                'focus_areas': [f'{request.domain} fundamentals', 'Communication skills', 'Networking'],
                 'monthly_goals': [f'Complete {request.domain} module', 'Build a mini project', 'Solve practice problems', 'Review and revise'],
                 'skills_to_learn': ['Core concepts', 'Problem solving', 'Tools & frameworks'],
                 'projects_to_build': [{'title': f'{request.domain} Capstone', 'description': f'A project applying {request.domain} skills', 'tech_stack': ['Python', 'React', 'SQL']}],
                 'resources': [{'name': f'Best {request.domain} Course', 'type': 'Course', 'url': 'https://coursera.org', 'is_free': True}],
                 'milestone': f'Complete {request.domain} foundation',
                 'dsa_target': 'Solve 100 problems',
-                'internship_target': 'Apply for internships' if y >= 3 else None
-            } for y in range(request.year, 5)],
+                'internship_target': 'Apply for internships' if request.year >= 3 else None
+            }],
             quick_start=f"Start with {request.domain} fundamentals and build a strong foundation in your {['first','second','third','fourth'][request.year-1]} year."
         )
 
@@ -98,23 +98,24 @@ class CareerRoadmapAgent:
         user_prompt = f"""
 Student Profile:
 - Name: {request.name}
-- Year: {request.year} (1-4)
+- Current Year: {request.year} (1-4)
 - Domain of Interest: {request.domain}
 - Career Goal: {request.career_goal}
 - Current Skill Level: {request.level}
 - Study Hours Available/Day: {request.hours_per_day}
 - College Tier: {request.college_tier}
 
-Generate a detailed career roadmap for this student.
+Generate a detailed career roadmap for the student's CURRENT year (Year {request.year}) only.
+Do NOT include plans for other years — only the year the student is currently in.
 The output MUST be exactly in the following JSON format:
 {{
   "student_name": "string",
   "domain": "string",
   "career_goal": "string",
-  "total_years": integer,
+  "total_years": 1,
   "plan": [
     {{
-      "year": integer,
+      "year": {request.year},
       "theme": "string",
       "focus_areas": ["string", "string"],
       "monthly_goals": ["string", "string", "string", "string"],
@@ -141,7 +142,7 @@ The output MUST be exactly in the following JSON format:
   ],
   "quick_start": "string"
 }}
-Ensure the JSON is valid and conforms exactly to this structure.
+Ensure the JSON is valid and conforms exactly to this structure. The plan array must contain exactly one entry (for Year {request.year}).
 """
 
         full_prompt = f"{system_prompt}\n\n{user_prompt}"

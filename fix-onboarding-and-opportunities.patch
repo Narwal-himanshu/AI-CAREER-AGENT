@@ -1,0 +1,221 @@
+diff --git a/backend/agents/combined_agent.py b/backend/agents/combined_agent.py
+index f4de960..94b4c48 100644
+--- a/backend/agents/combined_agent.py
++++ b/backend/agents/combined_agent.py
+@@ -491,17 +491,102 @@ Please generate the risk assessment JSON following the RiskOutput schema.
+                     {
+                         "question_id": "q_001",
+                         "question_text": "What is the time complexity of binary search on a sorted array of size n?",
+-                        "options": {
+-                            "A": "O(1)",
+-                            "B": "O(log n)",
+-                            "C": "O(n)",
+-                            "D": "O(n log n)"
+-                        },
++                        "options": {"A": "O(1)", "B": "O(log n)", "C": "O(n)", "D": "O(n log n)"},
+                         "correct_option": "B",
+                         "explanation": "Binary search divides the search interval in half each time, resulting in logarithmic O(log n) time complexity.",
+                         "topic": "Searching",
+                         "difficulty": "Easy",
+                         "estimated_time_seconds": 30
++                    },
++                    {
++                        "question_id": "q_002",
++                        "question_text": "Which data structure uses LIFO (Last In First Out) ordering?",
++                        "options": {"A": "Queue", "B": "Stack", "C": "Linked List", "D": "Heap"},
++                        "correct_option": "B",
++                        "explanation": "A stack follows Last In First Out ordering, where the most recently added element is removed first.",
++                        "topic": "Stacks/Queues",
++                        "difficulty": "Easy",
++                        "estimated_time_seconds": 25
++                    },
++                    {
++                        "question_id": "q_003",
++                        "question_text": "What is the worst-case time complexity of QuickSort?",
++                        "options": {"A": "O(n log n)", "B": "O(n)", "C": "O(n^2)", "D": "O(log n)"},
++                        "correct_option": "C",
++                        "explanation": "QuickSort degrades to O(n^2) in the worst case when the pivot repeatedly splits the array unevenly.",
++                        "topic": "Sorting",
++                        "difficulty": "Medium",
++                        "estimated_time_seconds": 40
++                    },
++                    {
++                        "question_id": "q_004",
++                        "question_text": "In OOP, what principle allows a subclass to provide a specific implementation of a method already defined in its parent class?",
++                        "options": {"A": "Encapsulation", "B": "Abstraction", "C": "Overriding", "D": "Overloading"},
++                        "correct_option": "C",
++                        "explanation": "Method overriding lets a subclass redefine a method inherited from its parent class with a specific implementation.",
++                        "topic": "OOP",
++                        "difficulty": "Easy",
++                        "estimated_time_seconds": 30
++                    },
++                    {
++                        "question_id": "q_005",
++                        "question_text": "Which traversal of a Binary Search Tree visits nodes in ascending sorted order?",
++                        "options": {"A": "Pre-order", "B": "In-order", "C": "Post-order", "D": "Level-order"},
++                        "correct_option": "B",
++                        "explanation": "In-order traversal (Left, Root, Right) of a BST visits nodes in ascending sorted order.",
++                        "topic": "Trees",
++                        "difficulty": "Medium",
++                        "estimated_time_seconds": 35
++                    },
++                    {
++                        "question_id": "q_006",
++                        "question_text": "What technique does Dynamic Programming primarily use to avoid recomputation?",
++                        "options": {"A": "Recursion without base cases", "B": "Memoization / storing subproblem results", "C": "Random sampling", "D": "Greedy selection"},
++                        "correct_option": "B",
++                        "explanation": "Dynamic Programming stores results of overlapping subproblems (memoization or tabulation) to avoid redundant recomputation.",
++                        "topic": "Dynamic Programming",
++                        "difficulty": "Hard",
++                        "estimated_time_seconds": 45
++                    },
++                    {
++                        "question_id": "q_007",
++                        "question_text": "Which HTTP method is typically used to update an existing resource entirely?",
++                        "options": {"A": "GET", "B": "POST", "C": "PUT", "D": "DELETE"},
++                        "correct_option": "C",
++                        "explanation": "PUT is conventionally used to replace/update an existing resource entirely in REST APIs.",
++                        "topic": "Programming Fundamentals",
++                        "difficulty": "Easy",
++                        "estimated_time_seconds": 25
++                    },
++                    {
++                        "question_id": "q_008",
++                        "question_text": "A sequence follows the pattern 2, 6, 12, 20, 30, ... What is the next number?",
++                        "options": {"A": "40", "B": "42", "C": "36", "D": "44"},
++                        "correct_option": "B",
++                        "explanation": "The differences between terms increase by 2 each time (4, 6, 8, 10, 12), so the next term is 30 + 12 = 42.",
++                        "topic": "Logical Reasoning",
++                        "difficulty": "Medium",
++                        "estimated_time_seconds": 40
++                    },
++                    {
++                        "question_id": "q_009",
++                        "question_text": "Which graph algorithm finds the shortest path from a single source in a graph with non-negative edge weights?",
++                        "options": {"A": "Depth First Search", "B": "Dijkstra's Algorithm", "C": "Kruskal's Algorithm", "D": "Bubble Sort"},
++                        "correct_option": "B",
++                        "explanation": "Dijkstra's Algorithm computes shortest paths from a single source in graphs with non-negative edge weights.",
++                        "topic": "Graphs",
++                        "difficulty": "Hard",
++                        "estimated_time_seconds": 45
++                    },
++                    {
++                        "question_id": "q_010",
++                        "question_text": "What does the acronym CIA stand for in the context of information security?",
++                        "options": {"A": "Confidentiality, Integrity, Availability", "B": "Central Intelligence Agency", "C": "Code, Interface, Application", "D": "Cache, Index, Array"},
++                        "correct_option": "A",
++                        "explanation": "The CIA triad — Confidentiality, Integrity, Availability — is the foundational model for information security.",
++                        "topic": "Domain Specific",
++                        "difficulty": "Medium",
++                        "estimated_time_seconds": 30
+                     }
+                 ]
+             }
+diff --git a/frontend/src/App.jsx b/frontend/src/App.jsx
+index 9d7dadc..184dea0 100644
+--- a/frontend/src/App.jsx
++++ b/frontend/src/App.jsx
+@@ -23,6 +23,11 @@ function App() {
+     navigate('/onboarding')
+   }
+ 
++  // Opportunities feed doesn't require profile setup - go straight to the page
++  const handleGoToOpportunities = () => {
++    navigate('/opportunities')
++  }
++
+   // Handle Log out trigger
+   const handleLogout = async () => {
+     setStudentProfile(null)
+@@ -57,7 +62,7 @@ function App() {
+       )}
+       <main className="flex-1 transition-all duration-300 min-h-screen">
+         <Routes>
+-          <Route path="/" element={<Home onStartAssessment={handleLogin} />} />
++          <Route path="/" element={<Home onStartAssessment={handleLogin} onGoToOpportunities={handleGoToOpportunities} />} />
+           <Route path="/onboarding" element={<Onboarding onStartQuiz={handleStartQuiz} onGoHome={handleLogout} />} />
+           <Route path="/quiz" element={<QuizPage profile={studentProfile} questions={quizQuestions} onComplete={handleQuizComplete} onGoHome={handleLogout} />} />
+           <Route path="/dashboard" element={<Dashboard profile={studentProfile} analysis={quizAnalysis} onRestart={handleLogout} />} />
+diff --git a/frontend/src/pages/Home.jsx b/frontend/src/pages/Home.jsx
+index ae772cc..764c130 100644
+--- a/frontend/src/pages/Home.jsx
++++ b/frontend/src/pages/Home.jsx
+@@ -16,7 +16,7 @@ function AnnouncementBar() {
+ }
+ 
+ // Sub-component 2: Sticky Navbar with Dropdowns/Mega-menus
+-function Navbar({ onStartAssessment }) {
++function Navbar({ onStartAssessment, onGoToOpportunities }) {
+   const [activeMenu, setActiveMenu] = useState(null) // 'product' | 'year' | 'resources' | null
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+ 
+@@ -60,7 +60,7 @@ function Navbar({ onStartAssessment }) {
+                     ].map((item, i) => (
+                       <button 
+                         key={i} 
+-                        onClick={onStartAssessment}
++                        onClick={item.name === 'Opportunities feed' ? onGoToOpportunities : onStartAssessment}
+                         className="text-left group cursor-pointer hover:bg-mist p-2 rounded-xl transition-all"
+                       >
+                         <div className="text-xs font-bold text-ink group-hover:text-signal transition-colors">{item.name}</div>
+@@ -166,10 +166,10 @@ function Navbar({ onStartAssessment }) {
+         <div className="md:hidden bg-paper border-b border-mist px-6 py-4 space-y-4">
+           <div className="space-y-1">
+             <div className="font-bold text-xs text-slate uppercase px-2 mb-1">Product</div>
+-            {['Skill assessment', 'Career roadmap', 'DSA practice', 'AI chatbot'].map((item) => (
++            {['Skill assessment', 'Career roadmap', 'DSA practice', 'Opportunities feed', 'AI chatbot'].map((item) => (
+               <button 
+                 key={item} 
+-                onClick={() => { setMobileMenuOpen(false); onStartAssessment(); }}
++                onClick={() => { setMobileMenuOpen(false); item === 'Opportunities feed' ? onGoToOpportunities() : onStartAssessment(); }}
+                 className="w-full text-left py-2 px-2 text-sm font-medium text-ink hover:bg-mist rounded-lg"
+               >
+                 {item}
+@@ -453,7 +453,7 @@ function TrustSection() {
+ }
+ 
+ // Sub-component 8: Interactive CSS Feature Showcases
+-function FeatureShowcase({ onStartAssessment }) {
++function FeatureShowcase({ onStartAssessment, onGoToOpportunities }) {
+   return (
+     <section className="bg-paper py-16 md:py-24 space-y-24 border-b border-mist">
+       <div className="max-w-[1200px] mx-auto px-6 space-y-20">
+@@ -556,7 +556,7 @@ function FeatureShowcase({ onStartAssessment }) {
+             <p className="text-xs text-slate leading-relaxed">
+               We scrape CTFs, hackathons, and contests globally. Downstream search agents filter them specifically matching your skill levels and domains to guarantee realistic engagement.
+             </p>
+-            <button onClick={onStartAssessment} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
++            <button onClick={onGoToOpportunities} className="text-xs font-bold text-signal hover:text-signal/80 flex items-center gap-1 cursor-pointer">
+               Browse Active Feeds &rarr;
+             </button>
+           </div>
+@@ -580,7 +580,7 @@ function FeatureShowcase({ onStartAssessment }) {
+                   <span className="text-amber-500 font-bold">2026-08-15</span>
+                 </div>
+                 <button 
+-                  onClick={onStartAssessment}
++                  onClick={onGoToOpportunities}
+                   className="px-3.5 py-1.5 bg-signal hover:bg-signal/90 text-[10px] font-bold text-white rounded-lg flex items-center gap-1"
+                 >
+                   Register <ExternalLink className="h-3 w-3" />
+@@ -792,17 +792,17 @@ function Footer({ onStartAssessment }) {
+ }
+ 
+ // Main Page wrapper
+-function Home({ onStartAssessment }) {
++function Home({ onStartAssessment, onGoToOpportunities }) {
+   return (
+     <div className="bg-paper min-h-screen flex flex-col text-ink antialiased">
+       <AnnouncementBar />
+-      <Navbar onStartAssessment={onStartAssessment} />
++      <Navbar onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} />
+       <Hero onStartAssessment={onStartAssessment} />
+       <LogoStrip />
+       <ValueGrid />
+       <HowItWorks onStartAssessment={onStartAssessment} />
+       <TrustSection />
+-      <FeatureShowcase onStartAssessment={onStartAssessment} />
++      <FeatureShowcase onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} />
+       <ResourceCards />
+       <FinalCTA onStartAssessment={onStartAssessment} />
+       <Footer onStartAssessment={onStartAssessment} />
