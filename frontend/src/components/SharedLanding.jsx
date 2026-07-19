@@ -219,12 +219,15 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
   )
 }
 
+import { Reveal } from "./Reveal"
+
 export function FinalCTA({ onStartAssessment }) {
   return (
     <section id="assessment" className="bg-signal text-white py-16 md:py-20 text-center relative overflow-hidden">
       <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-white/5 blur-2xl"></div>
       <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-white/5 blur-2xl"></div>
 
+      <Reveal delay={0}>
       <div className="max-w-[1200px] mx-auto px-6 space-y-6 relative">
         <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight max-w-xl mx-auto leading-tight">
           Find your path. Free, in 5 minutes.
@@ -240,6 +243,7 @@ export function FinalCTA({ onStartAssessment }) {
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
+      </Reveal>
     </section>
   )
 }
