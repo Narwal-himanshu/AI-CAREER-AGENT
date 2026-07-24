@@ -29,7 +29,6 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
     'DSA practice': () => onFeatureNav('dsa'),
     'Course recommendations': () => onFeatureNav('courses'),
     'Opportunities feed': onGoToOpportunities,
-    'Resume builder': () => onFeatureNav('resume'),
     'AI chatbot': () => onFeatureNav('chatbot')
   }
 
@@ -61,7 +60,6 @@ export function Navbar({ onStartAssessment, onGoToOpportunities, onFeatureNav, o
                       { name: 'DSA practice', desc: 'Topic-wise sheet' },
                       { name: 'Course recommendations', desc: 'Curated courses' },
                       { name: 'Opportunities feed', desc: 'Hackathons & CTFs' },
-                      { name: 'Resume builder', desc: 'ATS-ready templates' },
                       { name: 'AI chatbot', desc: 'Contextual assistant' }
                     ].map((item, i) => (
                       <button
@@ -214,7 +212,7 @@ export function Footer({ onStartAssessment }) {
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-ink uppercase tracking-wider">Product</h4>
             <ul className="space-y-2 text-xs">
-              {['Skill assessment', 'Career roadmap', 'DSA practice', 'Course recs', 'Opportunities feed', 'Resume builder', 'AI chatbot'].map(item => (
+              {['Skill assessment', 'Career roadmap', 'DSA practice', 'Course recs', 'Opportunities feed', 'AI chatbot'].map(item => (
                 <li key={item}>
                   <button onClick={onStartAssessment} className="text-slate hover:text-signal transition-colors cursor-pointer">
                     {item}

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Award, RefreshCw, GraduationCap, Milestone, Code2, BookOpen, FileText,
+  LayoutDashboard, Award, RefreshCw, GraduationCap, Milestone, Code2, BookOpen,
   PanelLeftClose, PanelLeftOpen, X
 } from 'lucide-react'
 import UserMenu from './UserMenu'
@@ -24,7 +24,6 @@ function Sidebar({
     { id: 'dsa', name: 'DSA Practice', icon: Code2 },
     { id: 'courses', name: 'Courses', icon: BookOpen },
     { id: 'opportunities', name: 'Opportunities', icon: Award },
-    { id: 'resume', name: 'Resume Builder', icon: FileText },
   ]
 
   const handleNavigate = (id) => {

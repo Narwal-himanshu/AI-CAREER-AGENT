@@ -7,7 +7,7 @@
   --font-mono: 'IBM Plex Mono', monospace;
   --font-display: 'Geist', sans-serif;
   
-  --color-paper: #FFFFFF;
+  --color-paper: #F5F7FA;
   --color-mist: #F5F6FA;
   --color-ink: #14161C;
   --color-slate: #5B5F6B;
@@ -137,4 +137,127 @@ h1, h2, h3, h4, h5, h6 {
   .shape-float-delay {
     animation: none;
   }
+}
+
+/* Infinite horizontal marquee, used by partner/logo strips */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee-scroll 28s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Soft pulsing colored glow around a card border. Set --glow-color and
+   --glow-border-color (rgba) inline per card to vary the color. */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px var(--glow-border-color, rgba(79,70,229,0.12)), 0 0 0px 0px var(--glow-color, rgba(79,70,229,0));
+  }
+  50% {
+    box-shadow: 0 0 0 1px var(--glow-border-color, rgba(79,70,229,0.4)), 0 0 22px 2px var(--glow-color, rgba(79,70,229,0.3));
+  }
+}
+
+.glow-border {
+  animation: glow-pulse 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  .glow-border {
+    animation: none;
+    box-shadow: 0 0 0 1px var(--glow-border-color, rgba(79,70,229,0.2));
+  }
+}
+
+/* Subtle step-change transition for the multi-step assessment wizard. */
+@keyframes step-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-fade-in {
+  animation: step-fade 350ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-fade-in {
+    animation: none;
+  }
+  .chatbot-breathe,
+  .chatbot-glow-pulse,
+  .chatbot-ping,
+  .chatbot-panel-in,
+  .chatbot-dot-bounce {
+    animation: none;
+  }
+}
+
+/* ============================================
+   Chatbot Widget Animations
+   ============================================ */
+
+/* Floating / breathing effect for the chatbot button */
+@keyframes chatbot-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.03); }
+}
+
+.chatbot-breathe {
+  animation: chatbot-breathe 3s ease-in-out infinite;
+}
+
+/* Soft glow pulse around the button */
+@keyframes chatbot-glow-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+.chatbot-glow-pulse {
+  animation: chatbot-glow-pulse 3s ease-in-out infinite;
+}
+
+/* Notification badge ping */
+@keyframes chatbot-ping-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+.chatbot-ping {
+  animation: chatbot-ping-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Panel slide-in animation */
+@keyframes chatbot-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chatbot-panel-in {
+  animation: chatbot-panel-in 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom right;
+}
+
+/* Typing indicator dot bounce */
+@keyframes chatbot-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+.chatbot-dot-bounce {
+  animation: chatbot-dot-bounce 1.2s ease-in-out infinite;
 }

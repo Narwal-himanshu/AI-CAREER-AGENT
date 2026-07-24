@@ -11,13 +11,11 @@ import {
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
-import QuizPage from './pages/QuizPage'
 import Dashboard from './pages/Dashboard'
 import Opportunities from './pages/Opportunities'
 import Roadmap from './pages/Roadmap'
 import DSA from './pages/DSA'
 import Courses from './pages/Courses'
-import Resume from './pages/Resume'
 import Profile from './pages/Profile'
 import About from './pages/About'
 import Sidebar from './components/Sidebar'
@@ -39,7 +37,6 @@ function App() {
   const [authToken, setAuthToken] = useState(null)
   const [userDoc, setUserDoc] = useState(null)
   const [studentProfile, setStudentProfile] = useState(null)
-  const [quizQuestions, setQuizQuestions] = useState([])
   const [quizAnalysis, setQuizAnalysis] = useState(null)
 
   // authLoading: true until Firebase's first auth-state callback fires.
@@ -167,19 +164,57 @@ function App() {
 
   // Central router for the Product mega-menu / feature showcase buttons.
   // Sends the user to the right real page instead of always re-triggering the assessment.
+  // Preserves the destination in sessionStorage so post-login redirect works.
   const handleFeatureNav = (key) => {
-    if (!authUser) {
-      navigate('/login')
-      return
-    }
     const routes = {
       roadmap: studentProfile ? roadmapPathForSlug(slugForYear(studentProfile?.profile?.year || 2)) : '/onboarding',
       dsa: '/dsa',
       courses: '/courses',
-      resume: '/resume',
-      chatbot: studentProfile ? '/dashboard' : '/onboarding'
+      chatbot: studentProfile ? '/dashboard' : '/onboarding',
+      opportunities: '/opportunities'
     }
-    navigate(routes[key] || '/onboarding')
+    const dest = routes[key] || '/onboarding'
+
+    if (!authUser) {
+      try { sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, dest) } catch { /* ignore */ }
+      navigate('/login')
+      return
+    }
+    // Authenticated but no profile yet — still stash the redirect so it's
+    // honored once onboarding + quiz complete.
+    if (!studentProfile && key !== 'chatbot' && key !== 'opportunities') {
+      try { sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, dest) } catch { /* ignore */ }
+      navigate('/onboarding')
+      return
+    }
+    navigate(dest)
+  }
+
+  // Auth-aware navigation for landing page CTA buttons.
+  // Unauthenticated users are sent to login with the destination stashed;
+  // after login the stashed destination is consumed automatically.
+  const handleLandingFeatureNav = (key) => {
+    const routes = {
+      roadmap: studentProfile ? roadmapPathForSlug(slugForYear(studentProfile?.profile?.year || 2)) : '/onboarding',
+      dsa: '/dsa',
+      dashboard: '/dashboard',
+      opportunities: '/opportunities',
+      courses: '/courses'
+    }
+    const dest = routes[key]
+    if (!dest) return
+
+    if (!authUser) {
+      try { sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, dest) } catch { /* ignore */ }
+      navigate('/login')
+      return
+    }
+    if (!studentProfile) {
+      try { sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, dest) } catch { /* ignore */ }
+      navigate('/onboarding')
+      return
+    }
+    navigate(dest)
   }
 
   // "By year" navigation (Navbar dropdown + Sidebar sub-menu both call this).
@@ -207,7 +242,6 @@ function App() {
     setAuthToken(null)
     setUserDoc(null)
     setStudentProfile(null)
-    setQuizQuestions([])
     setQuizAnalysis(null)
     navigate('/')
   }
@@ -220,7 +254,6 @@ function App() {
   // Restart the assessment (does NOT sign the user out — just clears the quiz state)
   const handleRestartAssessment = () => {
     setStudentProfile(null)
-    setQuizQuestions([])
     setQuizAnalysis(null)
     navigate('/onboarding')
   }
@@ -240,12 +273,9 @@ function App() {
     setUserDoc((prev) => ({ ...(prev || {}), profile: profileFields }))
   }
 
-  // Start quiz session helper
-  const handleStartQuiz = (profile, questions) => {
-    setStudentProfile(profile)
-    setQuizQuestions(questions)
-    navigate('/quiz')
-  }
+  // handleQuizFinished/handleQuizComplete below are also reused by the new
+  // Onboarding wizard's handleAssessmentComplete (it saves the result then
+  // navigates to the dashboard) so this logic lives in exactly one place.
 
   // Persist the finished quiz analysis to Firestore so it survives refreshes
   const handleQuizFinished = async (profile, analysis) => {
@@ -261,8 +291,18 @@ function App() {
     navigate(redirect || '/dashboard')
   }
 
+  // New 5-category Onboarding wizard finishes with both the profile payload
+  // and the fully-computed analysis in one shot (no separate /quiz hop).
+  // Reuses the same persistence + navigation helpers as the old flow so
+  // nothing about how results are saved/read is duplicated.
+  const handleAssessmentComplete = async (profile, analysis) => {
+    setStudentProfile(profile)
+    await handleQuizFinished(profile, analysis)
+    handleQuizComplete(analysis)
+  }
+
   // Hide sidebar during landing page, onboarding, login, and quiz taking
-  const showSidebar = !['/', '/about', '/login', '/onboarding', '/quiz'].includes(location.pathname)
+  const showSidebar = !['/', '/about', '/login', '/onboarding'].includes(location.pathname)
 
   const readinessScore = computeReadinessScore(userDoc)
   const readinessLabel = computeReadinessLabel(userDoc)
@@ -330,6 +370,7 @@ function App() {
               onStartAssessment={handleLogin}
               onGoToOpportunities={handleGoToOpportunities}
               onFeatureNav={handleFeatureNav}
+              onLandingFeatureNav={handleLandingFeatureNav}
               onYearNav={handleYearNav}
               authUser={authUser}
               onGoToProfile={handleGoToProfile}
@@ -355,20 +396,11 @@ function App() {
           <Route path="/onboarding" element={
             <Onboarding
               key={userDoc ? 'ready' : 'loading'}
-              onStartQuiz={handleStartQuiz}
+              onAssessmentComplete={handleAssessmentComplete}
               onGoHome={handleLogout}
               authUser={authUser}
               userDoc={userDoc}
               onSaveProfile={handleSaveProfile}
-            />
-          } />
-          <Route path="/quiz" element={
-            <QuizPage
-              profile={studentProfile}
-              questions={quizQuestions}
-              onComplete={handleQuizComplete}
-              onGoHome={handleLogout}
-              onQuizFinished={handleQuizFinished}
             />
           } />
           <Route path="/dashboard" element={
@@ -390,9 +422,6 @@ function App() {
           } />
           <Route path="/courses" element={
             requireProfile(<Courses profile={studentProfile} analysis={quizAnalysis} authToken={authToken} />)
-          } />
-          <Route path="/resume" element={
-            requireProfile(<Resume />)
           } />
           <Route path="/profile" element={
             authUser ? (

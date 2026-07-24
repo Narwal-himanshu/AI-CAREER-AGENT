@@ -136,7 +136,7 @@ function Roadmap({ profile, analysis, authToken }) {
         domain: DOMAIN_MAP[profile?.domain_interest?.[0]] || 'DSA/CP',
         career_goal: profile?.career_goal || 'Placement',
         level: analysis?.skill_profile?.level || 'Beginner',
-        hours_per_day: profile?.time_and_style?.hours_per_day || 2,
+        hours_per_day: Math.max(1, Math.floor(profile?.time_and_style?.hours_per_day || 2)),
         college_tier: profile?.profile?.college_tier || 'Tier-2',
       }
       const headers = { 'Content-Type': 'application/json' }

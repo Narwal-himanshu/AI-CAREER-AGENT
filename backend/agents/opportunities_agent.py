@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import asyncio
 import httpx
@@ -7,8 +6,6 @@ import feedparser
 import time
 from datetime import datetime
 from typing import Dict, Any, List
-from langchain_google_genai import ChatGoogleGenerativeAI
-from pydantic import ValidationError
 
 from models.schemas import OpportunitiesRequest, OpportunitiesResponse
 
@@ -34,13 +31,6 @@ class SimpleDictCache:
 # 6 hours cache
 opportunities_cache = SimpleDictCache(ttl_seconds=21600)
 
-def get_llm():
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
-        temperature=0.3,
-        api_key=os.getenv("GEMINI_API_KEY"),
-        max_retries=0
-    )
 
 class OpportunitiesAgent:
 
@@ -85,8 +75,10 @@ class OpportunitiesAgent:
         year = now.year
 
         queries = [
-            f"{domain} hackathon CTF contest {month_name} {year} for students India",
-            f"open source programs students 2025 {domain}"
+            f"{domain} hackathon {month_name} {year} for students India",
+            f"{domain} coding contest competition {month_name} {year} India",
+            f"open source programs students {year} {domain}",
+            f"{domain} internship hiring {year} India students",
         ]
 
         results = []
@@ -143,107 +135,193 @@ class OpportunitiesAgent:
             logger.error(f"Clist fetch failed: {e}")
             return []
 
-    async def find_opportunities(self, request: OpportunitiesRequest) -> OpportunitiesResponse:
+    def _classify_type(self, title: str, snippet: str) -> str:
+        text = f"{title} {snippet}".lower()
+        if any(w in text for w in ["ctf", "capture the flag"]):
+            return "CTF"
+        if any(w in text for w in ["hackathon", "hack"]):
+            return "Hackathon"
+        if any(w in text for w in ["contest", "competition", "weekly contest", "biweekly"]):
+            return "Contest"
+        if any(w in text for w in ["internship", "intern", "hiring"]):
+            return "Internship"
+        if any(w in text for w in ["open source", "gsoc", "hacktoberfest", "outreachy", "lfx"]):
+            return "Open Source"
+        return "Contest"
+
+    def _classify_level(self, text: str) -> str:
+        text = text.lower()
+        if any(w in text for w in ["advanced", "expert", "senior"]):
+            return "Advanced"
+        return "All Levels"
+
+    def _guess_deadline(self, text: str) -> str:
+        import re
+        date_match = re.search(r'(\d{4}-\d{2}-\d{2})', text)
+        if date_match:
+            return date_match.group(1)
+        return None
+
+    def _extract_prize(self, text: str) -> str:
+        import re
+        prize_patterns = [
+            r'prize[s]?\s*(?:pool)?\s*[:\-]?\s*([₹$]\s*[\d,]+(?:\s*(?:lakh|crore|K|M|USD)?)?)',
+            r'([₹$]\s*[\d,]+(?:\s*(?:lakh|crore|K|M|USD)?)?)\s*(?:prize|cash|reward)',
+            r'win\s+([₹$]\s*[\d,]+(?:\s*(?:lakh|crore|K|M|USD)?)?)',
+        ]
+        for pat in prize_patterns:
+            m = re.search(pat, text, re.IGNORECASE)
+            if m:
+                return f"Prize: {m.group(1).strip()}"
+        return None
+
+    def _parse_serper_results(self, items: List[Dict], domain: str, requested_types: List[str]) -> List[Dict]:
+        opportunities = []
+        seen_urls = set()
+
+        for item in items:
+            url = item.get("url", "")
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+
+            title = item.get("title", "")
+            snippet = item.get("snippet", "")
+            full_text = f"{title} {snippet}"
+
+            opp_type = self._classify_type(title, snippet)
+            if opp_type not in requested_types:
+                continue
+
+            # Extract organiser from common patterns
+            organiser = "Unknown"
+            lower_title = title.lower()
+            for sep in [" by ", " - ", " | ", " — ", " @ ", " from "]:
+                if sep in lower_title:
+                    parts = title.split(sep)
+                    organiser = parts[-1].strip()[:60]
+                    break
+            if organiser == "Unknown":
+                # Try known brands
+                known_brands = ["Goldman Sachs", "Google", "Microsoft", "Amazon", "Meta", "Apple",
+                                "Hacktoberfest", "LeetCode", "CodeChef", "Codeforces", "Kaggle",
+                                "Devpost", "Unstop", "Internshala", "HackerEarth", "HackerRank"]
+                for brand in known_brands:
+                    if brand.lower() in lower_title:
+                        organiser = brand
+                        break
+            if organiser == "Unknown" and len(title.split()) <= 4:
+                organiser = title
+
+            opportunities.append({
+                "title": title,
+                "type": opp_type,
+                "organiser": organiser,
+                "url": url,
+                "deadline": self._guess_deadline(full_text),
+                "prize_or_perk": self._extract_prize(full_text),
+                "difficulty_level": self._classify_level(full_text),
+                "domain_tags": [domain, opp_type],
+                "why_apply": snippet or f"Great {opp_type.lower()} opportunity for {domain} students.",
+                "registration_free": "free" in full_text.lower() or "no fee" in full_text.lower() or "registration" in full_text.lower(),
+                "duration": "Varies",
+            })
+
+        return opportunities
+
+    async def find_opportunities(self, request: OpportunitiesRequest, page: int = 1, limit: int = 12) -> OpportunitiesResponse:
         cache_key = f"{request.domain}_{request.level}"
         cached_result = opportunities_cache.get(cache_key)
 
         if cached_result:
             logger.info(f"Returning cached opportunities for key: {cache_key}")
-            return cached_result
+            all_opps = [o.model_dump() if hasattr(o, 'model_dump') else o for o in cached_result.opportunities]
+        else:
+            # Fetch from all sources concurrently
+            devpost_task = self.fetch_devpost()
+            serper_task = self.fetch_serper(request.domain)
+            clist_task = self.fetch_clist()
 
-        # Fetch from all sources concurrently
-        devpost_task = self.fetch_devpost()
-        serper_task = self.fetch_serper(request.domain)
-        clist_task = self.fetch_clist()
+            results = await asyncio.gather(devpost_task, serper_task, clist_task)
+            devpost_items, serper_items, clist_items = results
 
-        results = await asyncio.gather(devpost_task, serper_task, clist_task)
-        all_raw_results = {
-            "devpost": results[0],
-            "serper": results[1],
-            "clist": results[2]
-        }
+            # Parse Serper results directly (no Gemini needed)
+            parsed = self._parse_serper_results(serper_items, request.domain, request.types)
 
-        # Check if all sources failed
-        if not any(results):
-            logger.warning("All opportunity sources failed.")
+            # Add Devpost results
+            for item in devpost_items:
+                opp_type = self._classify_type(item.get("title", ""), "")
+                if opp_type not in request.types:
+                    continue
+                parsed.append({
+                    "title": item.get("title", ""),
+                    "type": opp_type,
+                    "organiser": "Devpost",
+                    "url": item.get("url", ""),
+                    "deadline": None,
+                    "prize_or_perk": None,
+                    "difficulty_level": "All Levels",
+                    "domain_tags": [request.domain, opp_type],
+                    "why_apply": f"Active hackathon on Devpost for {request.domain} students.",
+                    "registration_free": True,
+                    "duration": "Varies",
+                })
+
+            # Add Clist contest results
+            for item in clist_items:
+                parsed.append({
+                    "title": item.get("title", ""),
+                    "type": "Contest",
+                    "organiser": item.get("platform", "Unknown"),
+                    "url": item.get("url", ""),
+                    "deadline": item.get("end", None),
+                    "prize_or_perk": None,
+                    "difficulty_level": "All Levels",
+                    "domain_tags": [request.domain, "CP"],
+                    "why_apply": f"Upcoming competitive programming contest on {item.get('platform', 'unknown')}.",
+                    "registration_free": True,
+                    "duration": item.get("end", "TBD"),
+                })
+
+            all_opps = parsed
+
+            # Cache all results
+            if all_opps:
+                spotlight = f"Best match: {all_opps[0]['title']} — {all_opps[0]['why_apply']}"
+                cache_obj = OpportunitiesResponse(
+                    fetched_at=datetime.utcnow().isoformat(),
+                    total_found=len(all_opps),
+                    opportunities=all_opps,
+                    spotlight=spotlight,
+                )
+                opportunities_cache.set(cache_key, cache_obj)
+
+        if not all_opps:
             return OpportunitiesResponse(
                 fetched_at=datetime.utcnow().isoformat(),
                 total_found=0,
                 opportunities=[],
-                spotlight="No spotlight available.",
-                notice="Live data temporarily unavailable — try again shortly"
+                spotlight="No opportunities found right now.",
+                notice="No matching opportunities found — try broadening your filters."
             )
 
-        # 2. Use Gemini to parse and filter
-        llm = get_llm()
+        # Paginate
+        total = len(all_opps)
+        total_pages = max(1, (total + limit - 1) // limit)
+        start = (page - 1) * limit
+        end = start + limit
+        page_opps = all_opps[start:end]
 
-        system_prompt = (
-            "You are an expert student career researcher. You parse raw search results and API feeds "
-            "to extract clean, actionable opportunities (hackathons, contests, internships, open source) "
-            "for Indian BTech students."
+        spotlight = f"Best match: {all_opps[0]['title']} — {all_opps[0]['why_apply']}"
+
+        return OpportunitiesResponse(
+            fetched_at=datetime.utcnow().isoformat(),
+            total_found=total,
+            opportunities=page_opps,
+            spotlight=spotlight,
+            page=page,
+            total_pages=total_pages,
+            has_more=page < total_pages,
         )
-
-        user_prompt = f"""
-Student Profile:
-- Domain: {request.domain}
-- Level: {request.level}
-- Interested Types: {', '.join(request.types)}
-
-Raw Data from Sources:
-{json.dumps(all_raw_results, indent=2)}
-
-Task:
-Parse, deduplicate, and filter the raw data. Extract ONLY the opportunities that match the student's domain, level, and interested types.
-Format the output exactly as this JSON structure:
-{{
-  "fetched_at": "{datetime.utcnow().isoformat()}",
-  "total_found": integer,
-  "opportunities": [
-    {{
-      "title": "string",
-      "type": "Hackathon | CTF | Contest | Internship | Open Source",
-      "organiser": "string",
-      "url": "string",
-      "deadline": "YYYY-MM-DD or null",
-      "prize_or_perk": "string or null",
-      "difficulty_level": "Beginner | All Levels | Advanced",
-      "domain_tags": ["string"],
-      "why_apply": "string",
-      "registration_free": boolean,
-      "duration": "string"
-    }}
-  ],
-  "spotlight": "string explaining the single best opportunity right now for this student and why"
-}}
-Ensure the JSON is valid and conforms exactly to this structure without markdown wrappers.
-"""
-        full_prompt = f"{system_prompt}\n\n{user_prompt}"
-
-        try:
-            response = await llm.ainvoke(full_prompt)
-            content = response.content
-
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-
-            data = json.loads(content)
-            result = OpportunitiesResponse(**data)
-
-            # Cache the result
-            opportunities_cache.set(cache_key, result)
-            return result
-
-        except Exception as e:
-            logger.error(f"Error formatting opportunities with Gemini: {e}")
-            # Fallback if Gemini fails
-            return OpportunitiesResponse(
-                fetched_at=datetime.utcnow().isoformat(),
-                total_found=0,
-                opportunities=[],
-                spotlight="AI processing failed.",
-                notice="Failed to process live data — please try again later."
-            )
 
 opportunities_agent = OpportunitiesAgent()

@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 export function useInView(options = {}) {
-  const [isInView, setIsInView] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    }
-    return false;
-  });
+  const [isInView, setIsInView] = useState(true);
   const ref = useRef(null);
 
   useEffect(() => {

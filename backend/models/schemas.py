@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Literal
+from typing import List, Optional, Any, Dict, Literal
 
 # ==========================================
 # Agent 1: CareerRoadmapAgent Schemas
@@ -46,33 +46,31 @@ class CareerRoadmapResponse(BaseModel):
     quick_start: str
 
 # ==========================================
-# Agent 2: DSAPracticeAgent Schemas
+# Agent 2: DSA Practice Schemas (Static JSON)
 # ==========================================
 
-class DSAPracticeRequest(BaseModel):
-    level: Literal["Beginner", "Intermediate", "Advanced"]
-    domain: str
-    topic: str = "all"
-    topics: List[str] = Field(default_factory=lambda: ["all"])
+class DSAProblem(BaseModel):
+    title: str
+    url: str
+    difficulty: str = "MEDIUM"
+    tags: List[str] = Field(default_factory=list)
+    frequency: Optional[float] = None
+    acceptance_rate: Optional[float] = None
 
-class Problem(BaseModel):
-    order: int
-    topic: str
-    problem_title: str
-    problem_id: str
-    difficulty: str
-    leetcode_url: str
-    why_important: str
-    approach_hint: str
-    time_to_solve_minutes: int
-    tags: List[str]
+class DSATopicInfo(BaseModel):
+    topic_name: str
+    problem_count: int
 
-class DSAPracticeResponse(BaseModel):
-    level: str
-    topic_focus: str
-    sheet: List[Problem]
-    study_plan: str
-    daily_target: str
+class DSACompanyInfo(BaseModel):
+    company_name: str
+    problem_count: int
+
+class DSAPaginatedResponse(BaseModel):
+    problems: List[DSAProblem]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
 
 # ==========================================
 # Agent 3: CourseRecommendationAgent Schemas
@@ -97,12 +95,32 @@ class Recommendation(BaseModel):
     weekly_hours_needed: int
     completion_weeks: int
 
+class YouTubeRecommendation(BaseModel):
+    rank: int
+    title: str
+    channel: str
+    url: str
+    type: Literal["video", "playlist"]
+    duration_minutes: int = 0
+    view_count: int = 0
+    like_count: int = 0
+    comment_count: int = 0
+    score: float = 0.0
+    why_recommended: str = ""
+    thumbnail: str = ""
+    published_at: str = ""
+    item_count: Optional[int] = None
+
 class CourseRecommendationResponse(BaseModel):
     domain: str
     level: str
     recommendations: List[Recommendation]
     learning_path: str
     total_hours: int
+    top_courses: List[YouTubeRecommendation] = Field(default_factory=list)
+    top_playlists: List[YouTubeRecommendation] = Field(default_factory=list)
+    best_tutorials: List[YouTubeRecommendation] = Field(default_factory=list)
+    best_interview_resources: List[YouTubeRecommendation] = Field(default_factory=list)
 
 # ==========================================
 # Agent 4: OpportunitiesAgent Schemas
@@ -132,3 +150,23 @@ class OpportunitiesResponse(BaseModel):
     opportunities: List[Opportunity]
     spotlight: str
     notice: Optional[str] = None
+    page: int = 1
+    total_pages: int = 1
+    has_more: bool = False
+
+# ==========================================
+# Agent 5: ChatbotAgent Schemas
+# ==========================================
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    conversation_history: List[ChatMessage] = Field(default_factory=list)
+    student_context: Optional[Dict[str, Any]] = None
+
+class ChatResponse(BaseModel):
+    reply: str
+    sources: List[str] = Field(default_factory=list)

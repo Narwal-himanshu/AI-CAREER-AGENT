@@ -1,11 +1,41 @@
 import React from 'react'
 import ChatbotWidget from '../components/ChatbotWidget'
-import { Award, AlertTriangle, Play, CheckCircle2, Flame, Zap, ShieldAlert } from 'lucide-react'
+import {
+  Award, AlertTriangle, Play, CheckCircle2, Flame, Zap, ShieldAlert,
+  Sparkles, Code2, Terminal, Brain, Layers, Cloud, Shield, Smartphone,
+} from 'lucide-react'
+
+// Per-domain icon + gradient so the Skill Assessment breakdown (now scored
+// per selected domain instead of a fixed dsa/programming/logic/domain split)
+// stays visually consistent with the assessment wizard's domain config.
+const DOMAIN_STYLE = {
+  'DSA/CP': { icon: Code2, color: 'from-signal to-indigo-500', bar: 'bg-signal' },
+  'Web Development': { icon: Terminal, color: 'from-emerald-500 to-teal-500', bar: 'bg-emerald-500' },
+  'AI/ML': { icon: Brain, color: 'from-purple-500 to-pink-500', bar: 'bg-purple-500' },
+  'Cloud': { icon: Cloud, color: 'from-amber-500 to-orange-500', bar: 'bg-amber-500' },
+  'CyberSec': { icon: Shield, color: 'from-red-500 to-rose-500', bar: 'bg-red-500' },
+  'Mobile': { icon: Smartphone, color: 'from-teal-500 to-cyan-500', bar: 'bg-teal-500' },
+}
+const DEFAULT_DOMAIN_STYLE = { icon: Layers, color: 'from-slate to-gray-500', bar: 'bg-slate' }
 
 function Dashboard({ profile, analysis, onRestart }) {
   if (!analysis) return null
 
   const { skill_profile, summary, risk_report } = analysis
+
+  // Palette for the animated glow-border effect used across dashboard cards.
+  const GLOW_COLORS = [
+    { glow: 'rgba(79,70,229,0.28)', border: 'rgba(79,70,229,0.3)' },   // signal / indigo
+    { glow: 'rgba(168,85,247,0.26)', border: 'rgba(168,85,247,0.3)' }, // purple
+    { glow: 'rgba(245,158,11,0.26)', border: 'rgba(245,158,11,0.3)' }, // ember / amber
+    { glow: 'rgba(16,185,129,0.26)', border: 'rgba(16,185,129,0.3)' }, // emerald
+  ]
+  const glowStyle = (index) => {
+    const c = GLOW_COLORS[index % GLOW_COLORS.length]
+    return { '--glow-color': c.glow, '--glow-border-color': c.border }
+  }
+
+  const studentInitial = (profile?.profile?.name || 'S').trim().charAt(0).toUpperCase()
 
   // Helpers for styling levels matching light theme tokens
   const getLevelColor = (level) => {
@@ -29,25 +59,36 @@ function Dashboard({ profile, analysis, onRestart }) {
     <div className="min-h-screen bg-mist p-6 md:p-8 space-y-6 max-w-7xl mx-auto font-sans text-ink">
       
       {/* 1. Header Profile Banner */}
-      <div className="theme-card bg-paper p-6 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-[10px] font-bold text-signal uppercase tracking-widest mb-1.5">
-            <span>BTech {profile?.profile?.branch}</span>
-            <span>•</span>
-            <span>Year {profile?.profile?.year}</span>
-            <span>•</span>
-            <span>CGPA {profile?.profile?.cgpa}/10</span>
+      <div className="theme-card bg-gradient-to-br from-signal-tint via-paper to-purple-50 p-6 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        {/* Decorative glow blob + floating sticker */}
+        <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-gradient-to-br from-signal/20 to-purple-400/20 blur-2xl pointer-events-none"></div>
+        <div className="hidden sm:flex absolute top-4 right-6 h-10 w-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 items-center justify-center shadow-md shape-float">
+          <Sparkles className="h-5 w-5 text-white" />
+        </div>
+
+        <div className="flex items-start md:items-center gap-4 relative z-10">
+          <div className="hidden sm:flex h-12 w-12 flex-shrink-0 rounded-2xl bg-gradient-to-br from-signal to-purple-600 items-center justify-center text-white font-display font-extrabold text-lg shadow-lg shadow-signal/25">
+            {studentInitial}
           </div>
-          <h1 className="text-2xl font-display font-extrabold text-ink leading-tight">
-            Welcome, {profile?.profile?.name || 'Student'}
-          </h1>
-          <p className="text-xs text-slate mt-1">
-            Career Goal: <span className="text-ink font-bold">{profile?.career_goal}</span> at a <span className="text-ink font-bold">{profile?.profile?.college_tier}</span> tier college.
-          </p>
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-signal uppercase tracking-widest mb-1.5">
+              <span>BTech {profile?.profile?.branch}</span>
+              <span>•</span>
+              <span>Year {profile?.profile?.year}</span>
+              <span>•</span>
+              <span>CGPA {profile?.profile?.cgpa}/10</span>
+            </div>
+            <h1 className="text-2xl font-display font-extrabold text-ink leading-tight">
+              Welcome, {profile?.profile?.name || 'Student'}
+            </h1>
+            <p className="text-xs text-slate mt-1">
+              Career Goal: <span className="text-ink font-bold">{profile?.career_goal}</span> at a <span className="text-ink font-bold">{profile?.profile?.college_tier}</span> tier college.
+            </p>
+          </div>
         </div>
         <button
           onClick={onRestart}
-          className="px-5 py-2.5 rounded-full border border-signal text-signal hover:bg-signal-tint text-xs font-bold transition-all cursor-pointer"
+          className="relative z-10 px-5 py-2.5 rounded-full border border-signal text-signal hover:bg-signal-tint text-xs font-bold transition-all cursor-pointer bg-paper/70"
         >
           Retake Assessment
         </button>
@@ -57,9 +98,14 @@ function Dashboard({ profile, analysis, onRestart }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Level Overview Panel */}
-        <div className="theme-card bg-paper p-6 flex flex-col justify-between">
+        <div className="theme-card bg-paper p-6 flex flex-col justify-between glow-border" style={glowStyle(0)}>
           <div>
-            <span className="text-[10px] font-bold text-slate uppercase tracking-wider block mb-3">Readiness Level</span>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-signal to-purple-600 flex items-center justify-center flex-shrink-0">
+                <Award className="h-3.5 w-3.5 text-white" />
+              </span>
+              <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Readiness Level</span>
+            </div>
             <div className="flex items-baseline gap-2 mt-1">
               <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${getLevelColor(skill_profile.level)}`}>
                 {skill_profile.level}
@@ -78,29 +124,32 @@ function Dashboard({ profile, analysis, onRestart }) {
         </div>
 
         {/* Scores Breakdown Panel */}
-        <div className="theme-card bg-paper p-6 lg:col-span-2 space-y-4">
-          <span className="text-[10px] font-bold text-slate uppercase tracking-wider block">assessment Category Breakdown</span>
-          
+        <div className="theme-card bg-paper p-6 lg:col-span-2 space-y-4 glow-border" style={glowStyle(1)}>
+          <span className="text-[10px] font-bold text-slate uppercase tracking-wider block">Skill Assessment Breakdown</span>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            {[
-              { label: 'Data Structures & Algorithms', score: skill_profile.category_scores?.dsa || 0 },
-              { label: 'Programming Fundamentals', score: skill_profile.category_scores?.programming || 0 },
-              { label: 'Logical & Analytics', score: skill_profile.category_scores?.logic || 0 },
-              { label: 'Domain Specific', score: skill_profile.category_scores?.domain_specific || 0 }
-            ].map((cat, idx) => (
-              <div key={idx} className="space-y-1.5 p-3 rounded-xl bg-mist border border-mist">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-slate">{cat.label}</span>
-                  <span className="text-ink font-mono font-extrabold">{cat.score}%</span>
+            {Object.entries(skill_profile.category_scores || {}).map(([domain, score], idx) => {
+              const style = DOMAIN_STYLE[domain] || DEFAULT_DOMAIN_STYLE
+              return (
+                <div key={idx} className="space-y-1.5 p-3 rounded-xl bg-mist border border-mist">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate flex items-center gap-1.5">
+                      <span className={`h-5 w-5 rounded-md bg-gradient-to-br ${style.color} flex items-center justify-center flex-shrink-0`}>
+                        <style.icon className="h-3 w-3 text-white" />
+                      </span>
+                      {domain}
+                    </span>
+                    <span className="text-ink font-mono font-extrabold">{score}%</span>
+                  </div>
+                  <div className="w-full bg-paper h-2 rounded-full overflow-hidden border border-gray-200/50">
+                    <div
+                      className={`${style.bar} h-full rounded-full transition-all duration-500 shadow-sm`}
+                      style={{ width: `${score}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-paper h-2 rounded-full overflow-hidden border border-gray-200/50">
-                  <div 
-                    className="bg-signal h-full rounded-full transition-all duration-500 shadow-sm"
-                    style={{ width: `${cat.score}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
@@ -109,10 +158,12 @@ function Dashboard({ profile, analysis, onRestart }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Student Summary Agent Card */}
-        <div className="theme-card bg-paper p-6 lg:col-span-2 flex flex-col justify-between">
+        <div className="theme-card bg-paper p-6 lg:col-span-2 flex flex-col justify-between glow-border" style={glowStyle(2)}>
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Zap className="h-4.5 w-4.5 text-signal" />
+              <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-signal to-indigo-500 flex items-center justify-center flex-shrink-0">
+                <Zap className="h-3.5 w-3.5 text-white" />
+              </span>
               <span className="text-[10px] font-bold text-signal uppercase tracking-widest">Synthesis Analysis</span>
             </div>
             
@@ -155,11 +206,13 @@ function Dashboard({ profile, analysis, onRestart }) {
         </div>
 
         {/* Risk Agent Timeline Card */}
-        <div className="theme-card bg-paper p-6 flex flex-col justify-between">
+        <div className="theme-card bg-paper p-6 flex flex-col justify-between glow-border" style={glowStyle(3)}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4.5 w-4.5 text-amber-600" />
+                <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                  <ShieldAlert className="h-3.5 w-3.5 text-white" />
+                </span>
                 <span className="text-[10px] font-bold text-slate uppercase tracking-widest">Risk Assessment</span>
               </div>
               <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase ${getRiskColor(risk_report.overall_risk_level)}`}>
@@ -212,8 +265,13 @@ function Dashboard({ profile, analysis, onRestart }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Detailed Gaps Checklist */}
-        <div className="theme-card bg-paper p-6 space-y-4">
-          <span className="text-[10px] font-bold text-slate uppercase tracking-wider block">Gaps & Mitigation Details</span>
+        <div className="theme-card bg-paper p-6 space-y-4 glow-border" style={glowStyle(0)}>
+          <div className="flex items-center gap-2">
+            <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+              <Layers className="h-3.5 w-3.5 text-white" />
+            </span>
+            <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Gaps & Mitigation Details</span>
+          </div>
           <div className="space-y-3">
             {(risk_report.skill_gaps || []).map((gap, i) => (
               <div key={i} className="flex justify-between items-start gap-4 p-3 rounded-xl border border-mist bg-mist/30">
@@ -237,9 +295,14 @@ function Dashboard({ profile, analysis, onRestart }) {
         </div>
 
         {/* Strategic Risks & Red Flags */}
-        <div className="theme-card bg-paper p-6 space-y-5">
+        <div className="theme-card bg-paper p-6 space-y-5 glow-border" style={glowStyle(1)}>
           <div>
-            <span className="text-[10px] font-bold text-slate uppercase tracking-wider block mb-3">Red Flags</span>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-7 w-7 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-3.5 w-3.5 text-white" />
+              </span>
+              <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Red Flags</span>
+            </div>
             <div className="space-y-2">
               {(risk_report.red_flags || []).map((flag, idx) => (
                 <div key={idx} className="flex items-start gap-2.5 p-3 rounded-xl border border-red-200/40 bg-red-50 text-xs text-red-700 leading-relaxed font-semibold">
@@ -265,7 +328,7 @@ function Dashboard({ profile, analysis, onRestart }) {
       </div>
 
       {/* Floating Chatbot Widget */}
-      <ChatbotWidget summary={summary} skillProfile={skill_profile} />
+      <ChatbotWidget summary={summary} skillProfile={skill_profile} profile={profile} />
     </div>
   )
 }

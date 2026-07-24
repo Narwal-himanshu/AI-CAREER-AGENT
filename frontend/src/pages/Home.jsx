@@ -1,12 +1,27 @@
 import { Reveal } from "../components/Reveal";
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { 
-  Search, Menu, X, ArrowRight, CheckCircle2, ShieldCheck, 
+import {
+  Search, Menu, X, ArrowRight, CheckCircle2, ShieldCheck,
   ExternalLink, Code2, Milestone, Bell, Sparkles, BookOpen,
-  Calendar, Flame, GraduationCap, HelpCircle, ChevronDown
+  Calendar, Flame, GraduationCap, HelpCircle, ChevronDown,
+  Terminal, PlayCircle, LayoutDashboard, Trophy
 } from 'lucide-react'
 import { AnnouncementBar, Navbar, FinalCTA, Footer } from '../components/SharedLanding'
+import ChatbotWidget from '../components/ChatbotWidget'
+
+// Shared palette for the animated glow-border effect used across card grids.
+const GLOW_COLORS = [
+  { glow: 'rgba(79,70,229,0.32)', border: 'rgba(79,70,229,0.35)' },   // signal / indigo
+  { glow: 'rgba(245,158,11,0.30)', border: 'rgba(245,158,11,0.35)' }, // ember / amber
+  { glow: 'rgba(16,185,129,0.30)', border: 'rgba(16,185,129,0.35)' }, // emerald
+  { glow: 'rgba(168,85,247,0.28)', border: 'rgba(168,85,247,0.32)' }, // purple
+]
+
+function glowStyle(index) {
+  const c = GLOW_COLORS[index % GLOW_COLORS.length]
+  return { '--glow-color': c.glow, '--glow-border-color': c.border }
+}
 
 // Sub-component 3: Hero Section with Animated Readiness Ring
 function Hero({ onStartAssessment, targetScore, scoreLabel }) {
@@ -29,6 +44,9 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
 
   return (
     <section className="bg-paper py-16 md:py-24 border-b border-mist overflow-hidden relative">
+
+      {/* Subtle background texture */}
+      <div className="absolute inset-0 bg-dot-pattern text-signal/[0.05] pointer-events-none"></div>
 
       {/* Background Decorative Shapes */}
       <div className="hidden md:flex absolute inset-0 pointer-events-none overflow-hidden max-w-[1400px] mx-auto">
@@ -59,6 +77,7 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
           <h1 className="font-sans text-4xl md:text-5xl font-extrabold text-ink leading-tight tracking-tight">
             Personalised career roadmaps for BTech CS students.
           </h1>
+          
           
           <p className="text-base text-slate leading-relaxed">
             Stop guessing your placement readiness. Take our 5-minute diagnostic quiz, find your level, and unlock a customized preparation sheet containing roadmaps, DSA trackers, and curated resources.
@@ -162,25 +181,53 @@ function Hero({ onStartAssessment, targetScore, scoreLabel }) {
 }
 
 // Sub-component 4: Content Partner Logo Strip
+const PARTNER_LOGOS = [
+  { name: 'LeetCode', icon: Code2, color: '#F59E0B' },
+  { name: 'GeeksforGeeks', icon: Terminal, color: '#10B981' },
+  { name: 'Udemy', icon: GraduationCap, color: '#A855F7' },
+  { name: 'Coursera', icon: BookOpen, color: '#4F46E5' },
+  { name: 'YouTube', icon: PlayCircle, color: '#EF4444' },
+]
+
 function LogoStrip() {
+  // Duplicate the list so the marquee can loop seamlessly at -50%.
+  const track = [...PARTNER_LOGOS, ...PARTNER_LOGOS]
+
   return (
-    <section className="bg-mist py-8 border-b border-mist/50">
+    <section className="bg-mist py-8 border-b border-mist/50 overflow-hidden">
       <div className="max-w-[1200px] mx-auto px-6 text-center">
         <Reveal delay={0}>
-          <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-4">
+          <span className="text-[10px] font-bold text-slate uppercase tracking-widest block mb-5">
             Built with content from standard learning ecosystems
           </span>
         </Reveal>
-        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-          {['LeetCode', 'GeeksforGeeks', 'Udemy', 'Coursera', 'YouTube'].map((logo, index) => (
-            <Reveal key={logo} delay={(index + 1) * 80}>
-              <span
-                className="font-mono text-sm font-bold text-ink tracking-tight select-none opacity-45 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-200"
+      </div>
+
+      {/* Edge fade masks so logos scroll in/out smoothly */}
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-mist to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-mist to-transparent z-10" />
+
+        <div className="flex w-max marquee-track">
+          {track.map((logo, index) => {
+            const Icon = logo.icon
+            return (
+              <div
+                key={`${logo.name}-${index}`}
+                className="flex items-center gap-2.5 px-8 md:px-10 select-none flex-shrink-0"
               >
-                [{logo.toUpperCase()}]
-              </span>
-            </Reveal>
-          ))}
+                <span
+                  className="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${logo.color}1A` }}
+                >
+                  <Icon className="h-4.5 w-4.5" style={{ color: logo.color }} />
+                </span>
+                <span className="font-mono text-sm font-bold text-ink tracking-tight whitespace-nowrap">
+                  {logo.name}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -209,8 +256,9 @@ function ValueGrid() {
   ]
 
   return (
-    <section className="bg-paper py-16 md:py-24 border-b border-mist">
-      <div className="max-w-[1200px] mx-auto px-6 space-y-12">
+    <section className="bg-paper py-16 md:py-24 border-b border-mist relative overflow-hidden">
+      <div className="absolute inset-0 bg-dot-pattern text-slate/[0.04] pointer-events-none"></div>
+      <div className="max-w-[1200px] mx-auto px-6 space-y-12 relative z-10">
         <Reveal delay={0}>
           <div className="text-center max-w-xl mx-auto space-y-3">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">Why CareerAgent?</span>
@@ -223,7 +271,10 @@ function ValueGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((v, i) => (
             <Reveal key={i} delay={i * 100} className="flex">
-              <div className="w-full bg-white border border-slate/20 p-6 rounded-2xl hover:border-signal/20 transition-all flex flex-col justify-between">
+              <div
+                className="w-full bg-white border border-slate/20 p-6 rounded-2xl hover:border-signal/20 transition-all flex flex-col justify-between glow-border"
+                style={glowStyle(i)}
+              >
                 <div className="space-y-3">
                   <div className="h-8 w-8 rounded-lg bg-signal-tint flex items-center justify-center text-signal font-bold text-sm">
                     {i + 1}
@@ -246,7 +297,6 @@ function HowItWorks({ onStartAssessment }) {
     { num: '01', title: 'Take the quiz', desc: 'Complete our 10-15 question adaptive MCQ sheet covering DSA, logic, and core coding.' },
     { num: '02', title: 'Get your roadmap', desc: 'Instantly view your custom year-wise preparation timeline showing targeted goals.' },
     { num: '03', title: 'Practice daily', desc: 'Mark off topic-wise LeetCode sheets and track streaks with context-aware learning recs.' },
-    { num: '04', title: 'Build your resume', desc: 'Export an ATS-optimized, project-highlighted PDF matching placements benchmark criteria.' }
   ]
 
   return (
@@ -255,14 +305,17 @@ function HowItWorks({ onStartAssessment }) {
         <Reveal delay={0}>
           <div className="text-center max-w-md mx-auto space-y-3">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">How it works</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-ink">Four steps to your target placement</h2>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-ink">Three steps to your target placement</h2>
           </div>
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
           {steps.map((s, idx) => (
             <Reveal key={idx} delay={idx * 100} className="flex">
-              <div className="w-full relative space-y-3 bg-white border border-slate/20 hover:border-signal/20 rounded-2xl p-6 transition-all">
+              <div
+                className="w-full relative space-y-3 bg-white border border-slate/20 hover:border-signal/20 rounded-2xl p-6 transition-all glow-border"
+                style={glowStyle(idx)}
+              >
                 <div className="font-mono text-4xl font-extrabold text-signal/15 tracking-tight">
                   {s.num}
                 </div>
@@ -313,7 +366,10 @@ function TrustSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {points.map((p, i) => (
             <Reveal key={i} delay={i * 100} className="flex">
-              <div className="w-full border border-mist p-5 rounded-2xl bg-white space-y-2.5">
+              <div
+                className="w-full border border-mist p-5 rounded-2xl bg-white space-y-2.5 glow-border"
+                style={glowStyle(i)}
+              >
                 <h3 className="text-xs font-bold text-ink flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                   {p.title}
@@ -363,7 +419,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
           </Reveal>
           {/* Mock visual panel */}
           <Reveal delay={150}>
-            <div className="bg-mist p-6 rounded-2xl border border-mist flex flex-col gap-3.5 relative overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.25)]">
+            <div className="bg-mist p-6 rounded-2xl border border-mist flex flex-col gap-3.5 relative overflow-hidden glow-border" style={glowStyle(0)}>
             <span className="text-[10px] font-bold text-slate block">MOCK INTERACTIVE ROADMAP VIEW</span>
             <div className="space-y-3 relative">
               <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-signal/15"></div>
@@ -405,7 +461,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
           </Reveal>
           {/* Mock visual panel */}
           <Reveal delay={150} className="lg:order-1">
-            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-3 shadow-[0_0_50px_rgba(245,158,11,0.25)]">
+            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-3 glow-border" style={glowStyle(1)}>
             <div className="flex justify-between items-center text-[10px] font-bold text-slate">
               <span>MOCK DSA PROGRESS TRACKER</span>
               <span className="text-ember flex items-center gap-1">
@@ -459,7 +515,7 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
           </Reveal>
           {/* Mock visual panel */}
           <Reveal delay={150}>
-            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-4 shadow-[0_0_50px_rgba(79,70,229,0.25)]">
+            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-4 glow-border" style={glowStyle(3)}>
             <span className="text-[10px] font-bold text-slate block">MOCK OPPORTUNITY DETAILS CARD</span>
             <div className="p-4 bg-white border border-mist rounded-xl space-y-3 relative">
               <span className="absolute top-4 right-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[9px] font-bold px-2 py-0.5 rounded-full">
@@ -489,47 +545,111 @@ function FeatureShowcase({ onStartAssessment, onGoToOpportunities, onFeatureNav 
           </Reveal>
         </div>
 
-        {/* Showcase Row 4: Resume Builder (Visual Left) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <Reveal delay={0} className="lg:order-2">
-            <div className="space-y-5">
-              <span className="text-xs font-bold text-ember uppercase tracking-widest block">Feature 4</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
-                ATS-Optimized, project-focused resume builder.
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Compile your completed DSA problems, project links, and CGPA into an ATS-friendly resume layout. Download a validated PDF that matches company onboarding requirements.
-              </p>
-              <button onClick={() => onFeatureNav('resume')} className="text-xs font-bold text-ember hover:text-white flex items-center gap-1 cursor-pointer">
-                Build Resume &rarr;
-              </button>
-            </div>
-          </Reveal>
-          {/* Mock visual panel */}
-          <Reveal delay={150} className="lg:order-1">
-            <div className="bg-mist p-6 rounded-2xl border border-mist space-y-3 shadow-[0_0_50px_rgba(245,158,11,0.25)]">
-            <span className="text-[10px] font-bold text-slate block">MOCK ATS RESUME LAYOUT PREVIEW</span>
-            <div className="p-5 bg-white border border-mist rounded-xl space-y-3 text-[10px] text-ink font-sans shadow-sm">
-              <div className="text-center border-b border-mist pb-2">
-                <h4 className="font-extrabold text-xs">ARAVIND SHARMA</h4>
-                <p className="text-[9px] text-slate mt-0.5">aravind@btech.in | +91 99999 88888 | github.com/aravind</p>
-              </div>
-              <div className="space-y-1.5">
-                <h5 className="font-bold border-b border-mist pb-0.5 text-signal">EDUCATION</h5>
-                <p className="flex justify-between font-semibold">
-                  <span>BTech Computer Science, Tier-2 Institute</span>
-                  <span>CGPA: 8.5/10</span>
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <h5 className="font-bold border-b border-mist pb-0.5 text-signal">TECHNICAL SKILLS</h5>
-                <p><span className="font-semibold">Languages / Core:</span> Python, OOP, DSA (Intermediate classification level)</p>
-              </div>
-            </div>
-            </div>
-          </Reveal>
+      </div>
+    </section>
+  )
+}
+
+// Sub-component 8b: Quick Access Feature Cards (CTA buttons)
+function QuickAccessCTA({ onLandingFeatureNav, onStartAssessment, authUser }) {
+  const features = [
+    {
+      key: 'roadmap',
+      title: 'Generate Career Roadmap',
+      desc: 'Get a personalised year-wise preparation plan.',
+      icon: Milestone,
+      color: 'from-signal to-indigo-600',
+      bg: 'bg-signal-tint',
+      textColor: 'text-signal'
+    },
+    {
+      key: 'dsa',
+      title: 'DSA Practice',
+      desc: 'Topic-wise and company-wise problem sheets.',
+      icon: Code2,
+      color: 'from-emerald-500 to-teal-500',
+      bg: 'bg-emerald-50',
+      textColor: 'text-emerald-600'
+    },
+    {
+      key: 'dashboard',
+      title: 'Dashboard',
+      desc: 'View your skill profile, gaps, and risk report.',
+      icon: LayoutDashboard,
+      color: 'from-purple-500 to-pink-500',
+      bg: 'bg-purple-50',
+      textColor: 'text-purple-600'
+    },
+    {
+      key: 'opportunities',
+      title: 'Opportunities',
+      desc: 'Hackathons, CTFs, contests, and internships.',
+      icon: Trophy,
+      color: 'from-amber-500 to-orange-500',
+      bg: 'bg-amber-50',
+      textColor: 'text-amber-600'
+    }
+  ]
+
+  const handleClick = (key) => {
+    onLandingFeatureNav(key)
+  }
+
+  return (
+    <section className="bg-paper py-16 md:py-24 border-b border-mist relative overflow-hidden">
+      <div className="absolute inset-0 bg-dot-pattern text-slate/[0.04] pointer-events-none"></div>
+      <div className="max-w-[1200px] mx-auto px-6 space-y-12 relative z-10">
+        <Reveal delay={0}>
+          <div className="text-center max-w-xl mx-auto space-y-3">
+            <span className="text-xs font-bold text-signal uppercase tracking-widest block">Get Started</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-ink leading-tight">
+              Jump right into a feature.
+            </h2>
+            <p className="text-xs text-slate leading-relaxed max-w-md mx-auto">
+              {authUser
+                ? 'Choose a feature to begin your personalised career journey.'
+                : 'Create a free account to unlock personalised features, or explore opportunities right away.'}
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {features.map((f, i) => {
+            const Icon = f.icon
+            return (
+              <Reveal key={f.key} delay={i * 80} className="flex">
+                <button
+                  onClick={() => handleClick(f.key)}
+                  className="w-full text-left bg-white border border-slate/20 p-6 rounded-2xl hover:border-signal/25 hover:shadow-lg hover:shadow-signal/5 transition-all duration-300 group cursor-pointer flex flex-col gap-4"
+                >
+                  <div className={`h-11 w-11 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-ink group-hover:text-signal transition-colors">{f.title}</h3>
+                    <p className="text-[11px] text-slate mt-1.5 leading-relaxed">{f.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-signal mt-auto">
+                    {authUser ? 'Open' : 'Sign up to start'}
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+              </Reveal>
+            )
+          })}
         </div>
 
+        {!authUser && (
+          <div className="text-center pt-2">
+            <button
+              onClick={onStartAssessment}
+              className="px-6 py-3 bg-signal hover:bg-signal/90 text-xs font-bold text-white rounded-full flex items-center justify-center gap-2 mx-auto shadow-md transition-all cursor-pointer"
+            >
+              Create Free Account
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )
@@ -559,7 +679,8 @@ function ResourceCards() {
     <section className="bg-mist py-16 border-b border-mist relative">
       {/* Sharp Accent Divider */}
       <div className="absolute top-0 left-0 w-full h-8 -mt-8 bg-mist" style={{ clipPath: 'polygon(0 100%, 100% 0, 100% 100%)' }}></div>
-      <div className="max-w-[1200px] mx-auto px-6 space-y-10">
+      <div className="absolute inset-0 bg-dot-pattern text-slate/[0.04] pointer-events-none"></div>
+      <div className="max-w-[1200px] mx-auto px-6 space-y-10 relative z-10">
         <Reveal delay={0}>
           <div className="text-center max-w-sm mx-auto space-y-2">
             <span className="text-xs font-bold text-signal uppercase tracking-widest block">Resources</span>
@@ -570,7 +691,10 @@ function ResourceCards() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {cards.map((c, i) => (
             <Reveal key={i} delay={i * 100} className="flex">
-              <div className="w-full bg-white border border-mist p-6 rounded-2xl flex flex-col justify-between hover:border-signal/20 transition-all">
+              <div
+                className="w-full bg-white border border-mist p-6 rounded-2xl flex flex-col justify-between hover:border-signal/20 transition-all glow-border"
+                style={glowStyle(i)}
+              >
                 <div className="space-y-3">
                   <span className="text-[9px] font-bold text-signal uppercase tracking-wider block bg-signal-tint px-2.5 py-0.5 rounded-full w-max">
                     {c.label}
@@ -595,6 +719,7 @@ function Home({
   onStartAssessment,
   onGoToOpportunities,
   onFeatureNav,
+  onLandingFeatureNav,
   onYearNav,
   authUser,
   onGoToProfile,
@@ -620,9 +745,15 @@ function Home({
       <HowItWorks onStartAssessment={onStartAssessment} />
       <TrustSection />
       <FeatureShowcase onStartAssessment={onStartAssessment} onGoToOpportunities={onGoToOpportunities} onFeatureNav={onFeatureNav} />
+      <QuickAccessCTA
+        onLandingFeatureNav={onLandingFeatureNav}
+        onStartAssessment={onStartAssessment}
+        authUser={authUser}
+      />
       <ResourceCards />
       <FinalCTA onStartAssessment={onStartAssessment} />
       <Footer onStartAssessment={onStartAssessment} />
+      <ChatbotWidget />
     </div>
   )
 }
